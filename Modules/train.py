@@ -83,7 +83,10 @@ def train(cuda, change_fps, inputs, targets, model, optimizer, criterion, predic
     target_length = tmp - predict_n_pr - use_n_im
 
     optimizer.zero_grad()
-    loss = 0
+    #loss = 0.0
+    loss = th.zeros(1,requires_grad=True)
+
+    #print(tmp, use_n_im, target_length, predict_n_pr, use_n_im)
 
     for im in range(use_n_im-1, target_length+use_n_im):
         # Get one input for model
@@ -97,7 +100,10 @@ def train(cuda, change_fps, inputs, targets, model, optimizer, criterion, predic
             prediction, im_encoder_hidden, pr_encoder_hidden, decoder_hidden = model(image_s, pr_s, use_n_im, predict_n_pr, im_encoder_hidden, pr_encoder_hidden, decoder_hidden)
 
         # calculate loss function
-        loss += criterion(prediction, targets[:,im+1 : im+predict_n_pr+1,:])/predict_n_pr
+        #loss += criterion(prediction, targets[:,im+1 : im+predict_n_pr+1,:])/predict_n_pr
+        # This line causes a pb: a leaf Variable that requires grad has been used in an in-place operation.
+        loss = loss + criterion(prediction, targets[:,im+1 : im+predict_n_pr+1,:])/predict_n_pr
+        #print(loss)
 
 
     loss.backward()
@@ -157,7 +163,8 @@ def eval(cuda, change_fps, inputs, targets, model, criterion, predict_n_pr, use_
     target_length = tmp - predict_n_pr - use_n_im
     # For evaluation we don't need a gradient
     with th.no_grad():
-        loss = 0
+        #loss = 0
+        loss = th.zeros(1,requires_grad=False)
 
         for im in range(use_n_im-1, target_length+use_n_im):
             # Get one input for model
@@ -234,7 +241,8 @@ def test(cuda, change_fps, i, origins, preds, batchsize, inputs, targets,
     target_length = tmp - predict_n_pr - use_n_im
     # For testing we don't need a gradient
     with th.no_grad():
-        loss = 0
+        #loss = 0
+        loss = th.zeros(1,requires_grad=False)
 
         for im in range(use_n_im-1, target_length+use_n_im):
             # Get one input for model
@@ -316,8 +324,8 @@ def main(args, num_epochs = 30):
 
     im_in_one_second = int(24/frame_interval)
 
-    predict_n_pr = im_in_one_second*future_window_size
-    use_n_im = im_in_one_second*past_window_size
+    predict_n_pr = im_in_one_second * future_window_size
+    use_n_im = im_in_one_second * past_window_size
 
     use_LSTM = False
     use_stack = False
@@ -348,7 +356,7 @@ def main(args, num_epochs = 30):
         th.cuda.manual_seed_all(seed)
     th.backends.cudnn.enabled = False
     th.backends.cudnn.benchmark = False
-    th.backends.cudnn.deterministic = True
+    th.backends.cudnn.deterministic = True #for reproductivity
     #---------------------------------------------------------------------------
 
     # Load model if True
@@ -661,7 +669,7 @@ def main(args, num_epochs = 30):
                 # Convert to pytorch variables
                 inputs, p_and_roll = Variable(inputs), Variable(p_and_roll)
                 # test through the sequence
-                loss, origins, preds  = test(cuda, change_fps, key, origins, preds , batchsize, inputs, p_and_roll, model, loss_fn, predict_n_pr, use_n_im, use_2_encoders)
+                loss, origins, preds = test(cuda, change_fps, key, origins, preds , batchsize, inputs, p_and_roll, model, loss_fn, predict_n_pr, use_n_im, use_2_encoders)
                 test_loss += loss
 
             else:

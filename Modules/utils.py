@@ -138,10 +138,12 @@ def write_result(hyperparams, models : list, optimizers : list,
         f.write(str(final_test_loss))
         f.write("\n")
         f.write("time to predict is (seconds):      ")
-        f.write(str(hyperparams['time_to_predict']))
+        #f.write(str(hyperparams['time_to_predict']))
+        f.write(str(hyperparams['future_window_size']))
         f.write("\n")
         f.write("time (seconds) used to predict:    ")
-        f.write(str(hyperparams['use_sec']))
+        #f.write(str(hyperparams['use_sec']))
+        f.write(str(hyperparams['past_window_size']))
         f.write("\n")
         f.write("Use n episodes:                    ")
         f.write(str(hyperparams['use_n_episodes']))
@@ -220,7 +222,6 @@ def loadLabels(folder_prefix, N_episodes_st, N_episodes_end, seq_per_ep ,p_train
 
     """
     random.seed(RANDS)
-
 
     all_ep = np.linspace(N_episodes_st*seq_per_ep, N_episodes_end*seq_per_ep, (N_episodes_end*seq_per_ep-N_episodes_st*seq_per_ep +1), dtype =int )
 
@@ -309,7 +310,7 @@ class JsonDataset_universal (Dataset):
 
         tmp_use_n_im = self.use_n_im
         if self.use_LSTM:
-            tmp_use_n_im =  LEN_SEQ
+            tmp_use_n_im = LEN_SEQ
 
         for i in range(tmp_use_n_im):
             # if want use 1 fps with the data generated with 2 fps
