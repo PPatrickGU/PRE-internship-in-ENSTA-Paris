@@ -29,7 +29,7 @@ Render 2 frames per second. This is the best option so that the differences betw
 Generated data
 
 <p align="center">
-  <img width="600" src="render/data/gen_img.jpg">
+  <img width="600" src="gen_img.jpg">
 </p>
 <p align="justify">
 
