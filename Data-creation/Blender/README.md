@@ -4,6 +4,9 @@ Main part of the work placed in [reposetory](https://github.com/manubatet/Ship-s
 
 Take into account that it is not directly executed by python, it is executed by Blender.  This script has been updated by Dajing  to adapt to the Blender 2.83, so instalation of Blender 2.83 is needed.
 
+#Installation
+Go to Ubuntu Software and  install  directely Blender 2.83 (the script should be modified if the script is also modified)
+
 # To run the script from terminal
 (more info: https://learnsharewithdp.wordpress.com/2018/08/27/how-to-run-a-python-script-in-blender/)
 
