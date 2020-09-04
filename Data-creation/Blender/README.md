@@ -1,10 +1,10 @@
 # Wave-simulator
 
-The origin of this work is  https://github.com/manubatet/Ship-simulator
+The origin of this work is  shown here: https://github.com/manubatet/Ship-simulator
 
-Take into account that it is not directly executed by python, it is executed by Blender.  This script has been updated by Dajing  to adapt to the Blender 2.83, so instalation of Blender 2.83 is needed.
+The code can not be directly executed by python, it is executed by Blender (with Python API ).  This script has been updated by Dajing  to adapt to the Blender 2.83, so instalation of Blender 2.83 is needed.
 
-#Installation
+# Installation
 Go to Ubuntu Software and  install  directely Blender 2.83 (the script should be modified if the script is also modified)
 
 # To run the script from terminal
@@ -37,3 +37,4 @@ Generated data
 
 # Contact:
 Manuel Cortés Batet batetcortesm@gmail.com
+More detailes can be found from this link: https://github.com/manubatet/Ship-simulator  
