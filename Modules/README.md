@@ -1,44 +1,36 @@
-# Pre Project: Deep learning for predicting ship motion from images
-***Author:*** [Nazar-Mykola KAMINSKYI](https://github.com/Nazotron1923)
+# PRe Project: Deep learning for predicting ship motion from images, pitches and rolls
+***Author:*** [Dajing GU](https://github.com/PPatrickGU)
 
 
-Internship summer 2019
+Internship summer 2020
 
 
 ### Abstract
 
-Today, artificial intelligence penetrates into all areas of human activity. Developed methods and recent advances in machine learning show good results and will gradually replace other \textit{"traditional"} approaches. AI allows to automate processes thereby improving efficiency and accuracy of tasks in co-operation with people. I worked on the problem of predicting ship motion from images of the sea surface.
+With the continuous improvement of computing power, more and more autonomous driving systems involving artificial intelligence have now been developed, which can meet people's requirements for higher efficiency and more comfort. Marine transportation plays an important role in the increasing globalization. I worked on the problem of predicting ship motion from images of the sea surface and previous pitches and rolls.
 
-First of all, using 3D graphics generator Blender, I created a dataset, which simulates the ship's movement through sea waves. This software also gives information about parameters of the boat (pitch and roll in our case). Data streams were structured in sequences and normalized for further processing. Then 9 different neural networks were developed and tested.
-As I worked with time-ordered image sequences, I decided to use convolutional neural networks (CNN) for processing images and long short-term memory (LSTM) networks for time series processing.
-Finally, I run the hyperband algorithm to find the best model hyperparameters and then all experiment results were analyzed. Also, some possible improvements are suggested.
+First of all, a data set is created by using 3D graphics generator Blender, which
+simulates the ship's  movement through sea waves and offers us the information of the boat (the parameter of pitch and roll in our case). A more professional physical platform: Unreal Engine has also been tried. Data streams were structured in sequences and normalized for further processing. Then 16 different neural networks were developed based on previous work in order to better handle the time-ordered image-data sequences. Gated Recurrent Unit (GRU), Attention mechanism and Transformer Model have been introduced in the existent models of convolutional neural networks (CNN) and long short-term memory networks (LSTM). The models are tested and the best model hyper-parameters have been found by the Hyperband algorithm. All experiment results are analyzed. Also, some possible improvements are suggested.
 
-Keywords: Computer Vision, Deep learning, ship motion, pitch and roll prediction, image processing, Blender, CNN, LSTM, Hyperband
+Keywords:  Deep learning, Ship motion, Time series forecasting, Blender, Unreal Engine, LSTM, GRU, Attention, Transformer 
 
-> Deep learning for predicting ship motion from images.
-> Nazar-Mykola KAMINSKYI, 2019.
-> [[Raport]](https://drive.google.com/file/d/1qWt1FUVE5lxVT9z9ZGO4IziYSVd_o72T/view?usp=sharing)
+> Deep learning for predicting ship motion from images, pitches and data.
+> Dajing GU, 2020.
+> [[Report]](https://drive.google.com/file/d/1f1X34hPGru_1TWm-Wwvk2vFtxVj1hsTX/view?usp=sharing)
 
-Project data & results: [[Google drive]](https://drive.google.com/drive/folders/1RF8_wFfcIM0GIklXflPYv-tK3uaEWSSZ?usp=sharing)
+Project data & results: [[Google drive]]()
 
 ### Blender simulation
 
-As mentioned above the 3D graphics generator Blender was used to generate dataset. Blender is the free and open source 3D creation suite. It supports the entirety of the 3D pipeline—modeling, rigging, animation, simulation, rendering, compositing and motion tracking, even video editing and 2D design.
+Blender, a 3D graphics generator , was used to generate dataset. 
 
-Thanks to the work presented in [raport](https://github.com/manubatet/Ship-simulator/blob/master/ENSTA_ShipSimulator.pdf), we can use ready-made scripts to generate the necessary data. All needed is to specify the necessary parameters of the ocean, a camera position and an image expansion. (See how to install blender in [repository](https://github.com/Nazotron1923/ship-ocean_simulation_BLENDER))
+Thanks to the work presented in [report](https://github.com/manubatet/Ship-simulator/blob/master/ENSTA_ShipSimulator.pdf), we can use ready-made scripts to generate the necessary data. For details, see the part of \textbf{data createion} and [link](https://github.com/Nazotron1923/ship-ocean_simulation_BLENDER))
 
 ### Datasets
 
-In general, we generated 540 episodes (400 images per episode) = 216,000 images = 1800 minutes = 30 hours of simulations.
+In general, we generated 669 episodes (400 images per episode) = 267,600 images = 2230 minutes = 37 hours of simulations. 
 
-Also, to save memory, we chose rendering 2 frames per second. This is the best option so that the differences between two frames are noticeable and they do not "duplicate" the information.
-
-<p align="center">
-  <img width="600" src="plots/gen_img.jpg">
-</p>
-<p align="justify">
-
-Project data: [[Google drive]](https://drive.google.com/drive/folders/1RF8_wFfcIM0GIklXflPYv-tK3uaEWSSZ?usp=sharing)
+Project can be obtained from [[Google drive]](https://drive.google.com/drive/folders/1RF8_wFfcIM0GIklXflPYv-tK3uaEWSSZ?usp=sharing)
 
 ### Data preprocessing
 
@@ -250,5 +242,4 @@ options:
  - test                  (int): - [0 - train model ; 1 - hyperband test (hyperparameters search)]
  
 # Some issues
-
 1. Be careful when setting parameters, check constants: for example, the sequence time [LEN_SEQ] should be large enough to include past window size + future window size. To set it go to constants.py file!
