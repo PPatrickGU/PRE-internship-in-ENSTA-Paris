@@ -36,5 +36,5 @@ Generated data
 <p align="justify">
 
 # Contact:
-Manuel Cortés Batet batetcortesm@gmail.com
+Manuel Cortés Batet batetcortesm@gmail.com 
 More detailes can be found from this link: https://github.com/manubatet/Ship-simulator  
