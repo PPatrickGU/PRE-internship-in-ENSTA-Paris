@@ -6,7 +6,13 @@ Architectures of different neural models to solve the problem
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.autograd import Variable
+import numpy as np
+import random
+import math
 
+
+#models of Nazar: Form line 17 to line 782
 
 class AutoEncoder(nn.Module):
     def __init__(self, cuda = True, num_channel=3, h_dim=2688, z_dim=1024):
@@ -385,197 +391,16 @@ class LSTM_encoder_decoder_PR(nn.Module):
     def forward(self, image_s, pr_s, use_n_im, predict_n_pr, encoder_hidden, decoder_hidden):
 
         PR  = [pr_s[i] for i in range(use_n_im)]
+
         lstm_input_features = torch.cat(PR, 1).view(pr_s[0].size(0), 1, -1)
 
-        encoder_output, encoder_hidden = self.LSTM_encoder(lstm_input_features,  encoder_hidden)
+        encoder_output, encoder_hidden = self.LSTM_encoder(lstm_input_features, encoder_hidden)
+        #print(encoder_output - encoder_hidden[0].permute(1,0,2))
         decoder_output, decoder_hidden = self.LSTM_decoder(encoder_output, decoder_hidden)
 
-        decoder_output = decoder_output.view(pr_s[0].size(0), predict_n_pr, -1)
+        decoder_output = decoder_output.view(pr_s[0].size(0), predict_n_pr, -1) # (12,10,2)
 
         return decoder_output, encoder_hidden, decoder_hidden
-
-
-# class CNN_LSTM_encoder_decoder_images_PR (nn.Module):
-#     def __init__(self,h_dim=2688, z_dim=400, encoder_input_size = 4096, encoder_hidden_size = 300,  decoder_input_size = 300, decoder_hidden_size = 150, output_size = 20):
-#         super(CNN_LSTM_encoder_decoder_images_PR, self).__init__()
-#         self.encoder_hidden_size = encoder_hidden_size
-#         self.decoder_hidden_size = decoder_hidden_size
-#
-#         self.encoder = nn.Sequential(
-#             nn.Conv2d(3, 8, kernel_size=5, stride=1, padding=2),
-#             nn.BatchNorm2d(8),
-#             nn.ReLU(),
-#             nn.MaxPool2d(kernel_size= 3, stride=2, padding=1),
-#             nn.Conv2d(8, 16, kernel_size=3, stride=1, padding=1),
-#             nn.BatchNorm2d(16),
-#             nn.ReLU(),
-#             nn.MaxPool2d(kernel_size=3, stride=2, padding = 1),
-#             nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1, bias=False),
-#             nn.BatchNorm2d(32),
-#             nn.ReLU(),
-#             nn.MaxPool2d(kernel_size=3, stride=2, padding = 1),
-#         )
-#
-#         self.fc0 = nn.Linear(h_dim, int(h_dim/2))
-#         self.dropout0 = nn.Dropout(p=0.1)
-#         self.fc00 = nn.Linear(int(h_dim/2), int(h_dim/2))
-#         self.dropout00 = nn.Dropout(p=0.05)
-#
-#         self.mu = nn.Linear(int(h_dim/2), z_dim)
-#         self.std = nn.Linear(int(h_dim/2), z_dim)
-#
-#         self.encoder_lstm = nn.LSTM(encoder_input_size, encoder_hidden_size, batch_first=True)
-#
-#         self.decoder_lstm = nn.LSTM(decoder_input_size, decoder_hidden_size, batch_first=True)
-#
-#         self.decoder_fc_1 = nn.Linear(decoder_hidden_size, int(decoder_hidden_size/2))
-#         self.decoder_fc_2 = nn.Linear(int(decoder_hidden_size/2), output_size)
-#
-#
-#     def reparameterize(self, mu, logvar):
-#         std = logvar.mul(0.5).exp_()
-#
-#         esp = torch.randn(*mu.size()).cuda()
-#         z = mu + std * esp
-#         return z
-#
-#
-#     def bottleneck(self, h):
-#         mu  = self.mu(h)
-#         logvar = F.relu(self.std(h))
-#         z = self.reparameterize(mu, logvar)
-#         return z
-#
-#
-#     def encode(self, x):
-#         h = self.encoder(x)
-#         h = h.view(h.size(0), -1)
-#         h = self.dropout0(F.relu(self.fc0(h)))
-#         h = self.dropout00(F.relu(self.fc00(h)))
-#         z = self.bottleneck(h)
-#         return z
-#
-#
-#     def LSTM_encoder(self, inputs, hiddens):
-#         outputs, hiddens = self.encoder_lstm(inputs, hiddens)
-#         return outputs, hiddens
-#
-#
-#     def LSTM_decoder(self, inputs, hiddens):
-#         outputs = F.relu(inputs)
-#         outputs, hiddens = self.decoder_lstm(outputs, hiddens)
-#         outputs = F.relu(self.decoder_fc_1(outputs))
-#         outputs = torch.tanh(self.decoder_fc_2(outputs))
-#         return outputs, hiddens
-#
-#
-#     def initHiddenEncoder(self, n_batch):
-#         return  torch.zeros(1, n_batch  ,self.encoder_hidden_size)
-#
-#
-#     def initHiddenDecoder(self, n_batch):
-#         return  torch.zeros(1, n_batch  ,self.decoder_hidden_size)
-#
-#
-#     def forward(self, image_s, pr_s, use_n_im, predict_n_pr, encoder_hidden, decoder_hidden):
-#
-#         features = [self.encode( image_s[i] ) for i in range(use_n_im)]
-#         PR  = [pr_s[i] for i in range(use_n_im)]
-#
-#         lstm_input_features = [ torch.cat((features[i], PR[i]), 1).view(image_s[0].size(0), 1, -1) for i in range(use_n_im)]
-#         lstm_input_features = torch.cat(lstm_input_features, 2).view(image_s[0].size(0), 1, -1)
-#
-#         encoder_output, encoder_hidden = self.LSTM_encoder(lstm_input_features,  encoder_hidden)
-#         decoder_output, decoder_hidden = self.LSTM_decoder(encoder_output, decoder_hidden)
-#
-#         decoder_output = decoder_output.view(image_s[0].size(0), predict_n_pr, -1)
-#
-#         return decoder_output, encoder_hidden, decoder_hidden
-#
-#
-# class AutoEncoder(nn.Module):
-#     def __init__(self, num_channel=3, h_dim=2688, z_dim=400):
-#         super(AutoEncoder, self).__init__()
-#         self.encoder = nn.Sequential(
-#             nn.Conv2d(3, 8, kernel_size=5, stride=1, padding=2),
-#             nn.BatchNorm2d(8),
-#             nn.ReLU(),
-#             nn.MaxPool2d(kernel_size= 3, stride=2, padding=1),
-#             nn.Conv2d(8, 16, kernel_size=3, stride=1, padding=1),
-#             nn.BatchNorm2d(16),
-#             nn.ReLU(),
-#             nn.MaxPool2d(kernel_size=3, stride=2, padding = 1),
-#             nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1, bias=False),
-#             nn.BatchNorm2d(32),
-#             nn.ReLU(),
-#             nn.MaxPool2d(kernel_size=3, stride=2, padding = 1),
-#             # nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1, bias=False),
-#             # nn.BatchNorm2d(64),
-#             # nn.ReLU(),
-#             # nn.MaxPool2d(kernel_size=3, stride=2, padding = 1),
-#         )
-#         self.fc0 = nn.Linear(h_dim, int(h_dim/2))
-#         self.dropout0 = nn.Dropout(p=0.1)
-#         self.fc00 = nn.Linear(int(h_dim/2), int(h_dim/2))
-#         self.dropout00 = nn.Dropout(p=0.05)
-#         self.fc1 = nn.Linear(int(h_dim/2), z_dim)
-#         self.fc2 = nn.Linear(int(h_dim/2), z_dim)
-#         self.fc3 = nn.Linear(z_dim, h_dim)
-#
-#
-#         self.decoder = nn.Sequential(
-#             # nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=1, output_padding = (0,1)),
-#             # nn.BatchNorm2d(32),
-#             # nn.ReLU(),
-#             nn.ConvTranspose2d(32, 16, kernel_size=3, stride=2, padding=1, output_padding = 1),
-#             nn.BatchNorm2d(16),
-#             nn.ReLU(),
-#             nn.ConvTranspose2d(16, 8, kernel_size=3, stride=2, padding=1, output_padding = (0,1)),
-#             nn.BatchNorm2d(8),
-#             nn.ReLU(),
-#             nn.ConvTranspose2d(8, 3, kernel_size=4, stride=2, padding= 1, output_padding = 0),
-#             nn.BatchNorm2d(3),
-#             nn.Tanh()
-#         )
-#
-#
-#     def reparameterize(self, mu, logvar, cuda):
-#         std = logvar.mul(0.5).exp_()
-#         esp = torch.randn(*mu.size())
-#         if cuda:
-#             esp = esp.cuda()
-#
-#         z = mu + std * esp
-#         return z
-#
-#
-#     def bottleneck(self, h, cuda):
-#         mu, logvar = self.fc1(h), F.relu(self.fc2(h))
-#         z = self.reparameterize(mu, logvar, cuda)
-#         return z
-#
-#
-#     def encode(self, x, cuda):
-#         h = self.encoder(x)
-#         h = h.view(h.size(0), -1)
-#         h = self.dropout0(F.relu(self.fc0(h)))
-#         h = self.dropout00(F.relu(self.fc00(h)))
-#         z = self.bottleneck(h, cuda)
-#         return z
-#
-#
-#     def decode(self, z):
-#         z = self.fc3(z)
-#         z = z.view(z.size(0), 32, 7, 12)
-#         z = self.decoder(z)
-#         return z
-#
-#
-#     def forward(self, x, cuda):
-#         features = self.encode(x, cuda)
-#         z = self.decode(features)
-#         # print("/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////size -> ", z.size())
-#         return features, z
 
 
 class CNN_LSTM_encoder_decoder_images_PR (nn.Module):
@@ -658,129 +483,21 @@ class CNN_LSTM_encoder_decoder_images_PR (nn.Module):
     def forward(self, image_s, pr_s, use_n_im, predict_n_pr, encoder_hidden, decoder_hidden):
 
         features = [self.encode( image_s[i] ) for i in range(use_n_im)]
+
         PR  = [pr_s[i] for i in range(use_n_im)]
 
         lstm_input_features = [ torch.cat((features[i], PR[i]), 1).view(image_s[0].size(0), 1, -1) for i in range(use_n_im)]
         lstm_input_features = torch.cat(lstm_input_features, 2).view(image_s[0].size(0), 1, -1)
 
+
+
         encoder_output, encoder_hidden = self.LSTM_encoder(lstm_input_features,  encoder_hidden)
+
         decoder_output, decoder_hidden = self.LSTM_decoder(encoder_output, decoder_hidden)
 
         decoder_output = decoder_output.view(image_s[0].size(0), predict_n_pr, -1)
 
         return decoder_output, encoder_hidden, decoder_hidden
-
-class CNN_LSTM_encoder_attention_decoder_images_PR (nn.Module):
-    def __init__(self, cuda = True, h_dim=2688, z_dim=1024, encoder_input_size = 4096, encoder_hidden_size = 300,  decoder_input_size = 300, decoder_hidden_size = 150, output_size = 20):
-        super(CNN_LSTM_encoder_decoder_images_PR, self).__init__()
-        self.cuda_p = cuda
-        self.encoder_hidden_size = encoder_hidden_size
-        self.decoder_hidden_size = decoder_hidden_size
-        self.dropout_p = 0.1 #default
-        self.max_length = decoder_input_size #default
-
-
-        self.encoder = nn.Sequential(
-            nn.Conv2d(3, 8, kernel_size=5, stride=1, padding=2),
-            # nn.BatchNorm2d(8),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size= 3, stride=2, padding=1),
-            nn.Conv2d(8, 16, kernel_size=3, stride=1, padding=1),
-            # nn.BatchNorm2d(16),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=3, stride=2, padding = 1),
-            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1, bias=False),
-            # nn.BatchNorm2d(32),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=3, stride=2, padding = 1),
-        )
-
-        self.mu = nn.Linear(int(h_dim), z_dim)
-        self.std = nn.Linear(int(h_dim), z_dim)
-
-        self.encoder_lstm = nn.LSTM(encoder_input_size, encoder_hidden_size, batch_first=True)
-
-        self.embedding = nn.Embedding(self.output_size, self.decoder_input_size)
-        self.attn = nn.Linear(self.decoder_input_size * 2, self.max_length)
-        self.attn_combine = nn.Linear(self.decoder_input_size * 2, self.decoder_input_size)
-        self.dropout = nn.Dropout(self.dropout_p)
-
-        self.decoder_lstm = nn.LSTM(decoder_input_size, decoder_hidden_size, batch_first=True)
-
-        self.decoder_fc_1 = nn.Linear(decoder_hidden_size, int(decoder_hidden_size/2))
-        self.decoder_fc_2 = nn.Linear(int(decoder_hidden_size/2), output_size)
-
-    def reparameterize(self, mu, logvar):
-        std = logvar.mul(0.5).exp_()
-        esp = torch.randn(*mu.size())
-        if self.cuda_p:
-            esp = esp.cuda()
-        z = mu + std * esp
-        return z
-
-
-    def bottleneck(self, h):
-        mu  = self.mu(h)
-        logvar = F.relu(self.std(h))
-        z = self.reparameterize(mu, logvar)
-        return z
-
-
-    def encode(self, x):
-        h = self.encoder(x)
-        h = h.view(h.size(0), -1)
-        z = self.bottleneck(h)
-        return z
-
-
-    def LSTM_encoder(self, inputs, hiddens):
-        outputs, hiddens = self.encoder_lstm(inputs, hiddens)
-        return outputs, hiddens
-
-
-    def LSTM_decoder(self, inputs, hiddens):
-        outputs = F.relu(inputs)
-        outputs, hiddens = self.decoder_lstm(outputs, hiddens)
-        outputs = F.relu(self.decoder_fc_1(outputs))
-        outputs = torch.tanh(self.decoder_fc_2(outputs))
-        return outputs, hiddens
-
-
-    def initHiddenEncoder(self, n_batch):
-        return  torch.zeros(1, n_batch  ,self.encoder_hidden_size)
-
-
-    def initHiddenDecoder(self, n_batch):
-        return  torch.zeros(1, n_batch  ,self.decoder_hidden_size)
-
-
-    def forward(self, image_s, pr_s, use_n_im, predict_n_pr, encoder_hidden, decoder_hidden):
-
-        features = [self.encode( image_s[i] ) for i in range(use_n_im)]
-        PR  = [pr_s[i] for i in range(use_n_im)]
-
-        lstm_input_features = [ torch.cat((features[i], PR[i]), 1).view(image_s[0].size(0), 1, -1) for i in range(use_n_im)]
-        lstm_input_features = torch.cat(lstm_input_features, 2).view(image_s[0].size(0), 1, -1)
-
-        encoder_output, encoder_hidden = self.LSTM_encoder(lstm_input_features,  encoder_hidden)
-#
-        embedded = self.embedding(encoder_output).view(1, 1, -1)
-        embedded = self.dropout(embedded)
-
-        attn_weights = F.softmax(
-            self.attn(torch.cat((embedded[0],  decoder_hidden[0]), 1)), dim=1)
-        attn_applied = torch.bmm(attn_weights.unsqueeze(0),
-                                 encoder_output.unsqueeze(0))
-        decoder_output = torch.cat((embedded[0], attn_applied[0]), 1)
-        decoder_output = self.attn_combine(decoder_output).unsqueeze(0)
-
-        decoder_output = F.relu(decoder_output)
-#
-        decoder_output, decoder_hidden = self.LSTM_decoder(decoder_output, decoder_hidden)
-        decoder_output = F.log_softmax(self.out(decoder_output[0]), dim=1)
-        decoder_output = decoder_output.view(image_s[0].size(0), predict_n_pr, -1)
-
-        return decoder_output, encoder_hidden, decoder_hidden, attn_weights
 
 
 class CNN_LSTM_encoder_decoder_images(nn.Module):
@@ -873,7 +590,6 @@ class CNN_LSTM_encoder_decoder_images(nn.Module):
         decoder_output = decoder_output.view(image_s[0].size(0), predict_n_pr, -1)
 
         return decoder_output, encoder_hidden, decoder_hidden
-
 
 class CNN_LSTM_image_encoder_PR_encoder_decoder(nn.Module):
     def __init__(self, cuda = True, h_dim=2688, z_dim=1024, im_encoder_input_size = 4096, pr_encoder_input_size = 20 , im_encoder_hidden_size = 128, pr_encoder_hidden_size = 128, decoder_hidden_size = 256,  output_size = 20):
@@ -1058,3 +774,2066 @@ class CNN_LSTM_decoder_images_PR(nn.Module):
         decoder_output = decoder_output.view(image_s[0].size(0), predict_n_pr, -1)
 
         return decoder_output, encoder_hidden, decoder_hidden
+
+
+
+#######################################################
+#Models of Dajing
+class LSTM_encoder_GRU_decoder_PR(nn.Module):
+    def __init__(self, cuda = True, encoder_input_size = 10, encoder_hidden_size = 300, decoder_hidden_size = 300,  output_size = 20):
+        super(LSTM_encoder_GRU_decoder_PR, self).__init__()
+        self.cuda_p = cuda
+        self.encoder_hidden_size = encoder_hidden_size
+        self.decoder_hidden_size = decoder_hidden_size
+
+        self.encoder_lstm = nn.LSTM(encoder_input_size, encoder_hidden_size, batch_first=True)
+        self.decoder_gru = nn.GRU(decoder_hidden_size, decoder_hidden_size, batch_first=True)
+
+        self.decoder_fc_1 = nn.Linear(decoder_hidden_size, int(decoder_hidden_size/2))
+        self.decoder_fc_2 = nn.Linear(int(decoder_hidden_size/2), output_size)
+
+
+    def LSTM_encoder(self, inputs, hiddens):
+        outputs, hiddens = self.encoder_lstm(inputs, hiddens)
+        return outputs, hiddens
+
+
+    def GRU_decoder(self, inputs, hiddens):
+        outputs = F.relu(inputs)
+        outputs, hiddens = self.decoder_gru(outputs, hiddens)
+        outputs = F.relu(self.decoder_fc_1(outputs))
+        outputs = torch.tanh(self.decoder_fc_2(outputs))
+        return outputs, hiddens
+
+
+    def initHiddenEncoder(self, n_batch):
+        return  torch.zeros(1, n_batch  ,self.encoder_hidden_size)
+
+
+    def initHiddenDecoder(self, n_batch):
+        return  torch.zeros(1, n_batch  ,self.decoder_hidden_size)
+
+
+    def forward(self, image_s, pr_s, use_n_im, predict_n_pr, encoder_hidden, decoder_hidden):
+
+        PR  = [pr_s[i] for i in range(use_n_im)]
+
+        lstm_input_features = torch.cat(PR, 1).view(pr_s[0].size(0), 1, -1)
+
+        encoder_output, encoder_hidden = self.LSTM_encoder(lstm_input_features, encoder_hidden)
+        #print(encoder_output - encoder_hidden[0].permute(1,0,2))
+        decoder_output, decoder_hidden = self.GRU_decoder(encoder_output, decoder_hidden)
+
+        decoder_output = decoder_output.view(pr_s[0].size(0), predict_n_pr, -1) # (12,10,2)
+
+        return decoder_output, encoder_hidden, decoder_hidden
+
+
+
+class LSTM_encoder_GRU_decoder_PR_many(nn.Module):
+    def __init__(self, cuda = True, encoder_input_size = 10, encoder_hidden_size = 300, decoder_hidden_size = 300,  output_size = 20):
+        super(LSTM_encoder_GRU_decoder_PR_many, self).__init__()
+        self.cuda_p = cuda
+        self.encoder_hidden_size = encoder_hidden_size
+        self.decoder_hidden_size = decoder_hidden_size
+
+        self.encoder_lstm = nn.LSTM(encoder_input_size, encoder_hidden_size, batch_first=True)
+        self.decoder_gru = nn.GRU(decoder_hidden_size, decoder_hidden_size, batch_first=True)
+
+        self.decoder_fc_1 = nn.Linear(decoder_hidden_size, int(decoder_hidden_size/2))
+        self.decoder_fc_2 = nn.Linear(int(decoder_hidden_size/2), output_size)
+
+
+    def LSTM_encoder(self, inputs, hiddens):
+        outputs, hiddens = self.encoder_lstm(inputs, hiddens)
+        return outputs, hiddens
+
+
+    def GRU_decoder(self, inputs, hiddens):
+        outputs = F.relu(inputs)
+        outputs, hiddens = self.decoder_gru(outputs, hiddens)
+        outputs = F.relu(self.decoder_fc_1(outputs))
+        outputs = torch.tanh(self.decoder_fc_2(outputs))
+        return outputs, hiddens
+
+
+    def initHiddenEncoder(self, n_batch):
+        return  torch.zeros(1, n_batch  ,self.encoder_hidden_size)
+
+
+    def initHiddenDecoder(self, n_batch):
+        return  torch.zeros(1, n_batch  ,self.decoder_hidden_size)
+
+
+    def forward(self, image_s, pr_s, use_n_im, predict_n_pr, encoder_hidden, decoder_hidden):
+
+        PR  = [pr_s[i] for i in range(use_n_im)]
+
+        lstm_input_features = torch.cat(PR, 1).view(pr_s[0].size(0), use_n_im, -1)
+
+        encoder_output, encoder_hidden = self.LSTM_encoder(lstm_input_features, encoder_hidden)
+        #print(encoder_output - encoder_hidden[0].permute(1,0,2))
+        decoder_output, decoder_hidden = self.GRU_decoder(encoder_output, decoder_hidden)
+
+        decoder_output = decoder_output.view(pr_s[0].size(0), predict_n_pr, -1) # (12,10,2)
+
+        return decoder_output, encoder_hidden, decoder_hidden
+
+
+class GRU_encoder_decoder_PR(nn.Module):
+    def __init__(self, cuda = True, encoder_input_size = 10, encoder_hidden_size = 300, decoder_hidden_size = 300,  output_size = 20):
+        super(GRU_encoder_decoder_PR, self).__init__()
+        self.cuda_p = cuda
+        self.encoder_hidden_size = encoder_hidden_size
+        self.decoder_hidden_size = decoder_hidden_size
+
+        self.encoder_gru = nn.GRU(encoder_input_size, encoder_hidden_size, batch_first= True)
+        self.decoder_gru = nn.GRU(decoder_hidden_size, decoder_hidden_size,batch_first= True)
+
+        self.decoder_fc_1 = nn.Linear(decoder_hidden_size, int(decoder_hidden_size/2))
+        self.decoder_fc_2 = nn.Linear(int(decoder_hidden_size/2), output_size)
+
+
+    def GRU_encoder(self, inputs, hiddens):
+        outputs, hiddens = self.encoder_gru(inputs, hiddens)
+        return outputs, hiddens
+
+
+    def GRU_decoder(self, inputs, hiddens):
+        outputs = F.relu(inputs)
+        outputs, hiddens = self.decoder_gru(outputs, hiddens)
+
+        outputs = F.relu(self.decoder_fc_1(outputs))
+        outputs = torch.tanh(self.decoder_fc_2(outputs))
+        return outputs, hiddens
+
+
+    def initHiddenEncoder(self, n_batch):
+        return torch.zeros(1, n_batch ,self.encoder_hidden_size)
+
+
+    def initHiddenDecoder(self, n_batch):
+        return torch.zeros(1, n_batch  ,self.decoder_hidden_size)
+
+
+    def forward(self, image_s, pr_s, use_n_im, predict_n_pr, encoder_hidden, decoder_hidden):
+        PR  = [pr_s[i] for i in range(use_n_im)]
+
+        gru_input_features = torch.cat(PR, 1).view(pr_s[0].size(0), 1, -1)
+
+        encoder_output, encoder_hidden = self.GRU_encoder(gru_input_features, encoder_hidden)
+
+        decoder_output, decoder_hidden = self.GRU_decoder(encoder_output, decoder_hidden)
+
+        decoder_output = decoder_output.view(pr_s[0].size(0), predict_n_pr, -1)
+
+        return decoder_output, encoder_hidden, decoder_hidden
+
+class GRU_encoder_decoder_PR_many(nn.Module):
+    def __init__(self, cuda = True, encoder_input_size = 10, encoder_hidden_size = 300, decoder_hidden_size = 300,  output_size = 20):
+        super(GRU_encoder_decoder_PR_many, self).__init__()
+        self.cuda_p = cuda
+        self.encoder_hidden_size = encoder_hidden_size
+        self.decoder_hidden_size = decoder_hidden_size
+
+        self.encoder_gru = nn.GRU(encoder_input_size, encoder_hidden_size, batch_first= True)
+        self.decoder_gru = nn.GRU(decoder_hidden_size, decoder_hidden_size,batch_first= True)
+
+        self.decoder_fc_0 = nn.Linear(output_size, decoder_hidden_size)
+        self.decoder_fc_1 = nn.Linear(decoder_hidden_size, int(decoder_hidden_size/2))
+        self.decoder_fc_2 = nn.Linear(int(decoder_hidden_size/2), output_size)
+
+
+    def GRU_encoder(self, inputs, hiddens):
+        outputs, hiddens = self.encoder_gru(inputs, hiddens)
+        return outputs, hiddens
+
+
+    def GRU_decoder(self, inputs, hiddens):
+        outputs = F.relu(inputs)
+        outputs, hiddens = self.decoder_gru(outputs, hiddens)
+
+        outputs = F.relu(self.decoder_fc_1(outputs))
+        outputs = torch.tanh(self.decoder_fc_2(outputs))
+        return outputs, hiddens
+
+
+    def initHiddenEncoder(self, n_batch):
+        return torch.zeros(1, n_batch ,self.encoder_hidden_size)
+
+
+    def initHiddenDecoder(self, n_batch):
+        return torch.zeros(1, n_batch  ,self.decoder_hidden_size)
+
+
+    def forward(self, image_s, pr_s, use_n_im, predict_n_pr, encoder_hidden, decoder_hidden):
+
+        PR  = [pr_s[i] for i in range(use_n_im)]
+        gru_input_features = torch.cat(PR, 1).view(pr_s[0].size(0), use_n_im, -1) #(24,10,2)
+        encoder_output, encoder_hidden = self.GRU_encoder(gru_input_features, encoder_hidden)
+
+        if self.cuda_p:
+             output = torch.zeros(pr_s[0].size(0), 1, 2).cuda()
+        else:
+             output = torch.zeros(pr_s[0].size(0), 1, 2)
+
+        decoder_input = torch.tanh(self.decoder_fc_0(gru_input_features[:,-1,:].unsqueeze(1)))
+        decoder_hidden = encoder_hidden
+        for t in range(0, predict_n_pr):
+            #decoder_output = [batch_size, 1, output_size = 2]
+            decoder_output, decoder_hidden = self.GRU_decoder(decoder_input, decoder_hidden)
+            output = torch.cat([output, decoder_output], 1)
+        #output = [batchize, predict_n_pr+1, output_size = 2]
+        output = output[:,1:,: ]
+        #output = [batch_size, predict_n_pr, output_size = 2]
+        return output, encoder_hidden, decoder_hidden
+
+
+class GRU_encoder_attention_decoder_PR(nn.Module):
+    def __init__(self, cuda = True, encoder_input_size = 10, encoder_hidden_size = 300, batch_size = 12, decoder_hidden_size = 300,  output_size = 20):
+        super(GRU_encoder_attention_decoder_PR, self).__init__()
+        self.cuda_p = cuda
+        self.encoder_hidden_size = encoder_hidden_size
+        self.decoder_hidden_size = decoder_hidden_size
+        #self.sequence_length = 1
+
+
+        self.encoder_gru = nn.GRU(encoder_input_size, encoder_hidden_size, batch_first=True)     #batch_first only influences the input, not the hidden
+
+        self.attn = nn.Linear(encoder_hidden_size + decoder_hidden_size, decoder_hidden_size, bias=False)
+        self.v = nn.Linear(decoder_hidden_size, 1, bias=False)
+
+        self.decoder_gru = nn.GRU(encoder_hidden_size * 2, decoder_hidden_size, batch_first=True)
+
+        self.decoder_fc_1 = nn.Linear(encoder_hidden_size * 2 + decoder_hidden_size, int(decoder_hidden_size/2))
+        self.decoder_fc_2 = nn.Linear(int(decoder_hidden_size/2), output_size)
+
+
+    def GRU_encoder(self, inputs, hiddens):
+        outputs, hiddens = self.encoder_gru(inputs, hiddens)
+        return outputs, hiddens
+
+    def attention_net(self, s, encoder_output):
+        # s = [1, batch_size, decoder_hidden_size]
+        # encoder_output = [batch_size, seq_len, encoder_hidden_size]
+
+        batch_size = encoder_output.shape[0]
+        seq_len = encoder_output.shape[1]
+
+        # repeat decoder hidden state seq_length times
+        # s = [seq_len, batch_size, dedcoder_hidden_size]
+        # encoder_output = [batch_size, seq_length, encoder_hidden_size]
+        s = s.repeat(seq_len, 1, 1)
+
+        # energy = [batch_size, seq_len, decoder_hiden_size]
+        energy = torch.tanh(self.attn(torch.cat((s.transpose(0,1), encoder_output), dim=2)))
+
+        # attention = [batch_size, seq_len, 1]
+        attention = self.v(energy)
+
+        return F.softmax(attention, dim=1)
+
+    def GRU_decoder(self, decoder_input, s, encoder_output):
+
+        # decoder_input = [batch_size, 1, output_size = 20]
+        # s = [1, batch_size, decoder_hidden_size]
+        # encoder_output = [batch_size, seq_length = 1, encoder_hidden_size]
+
+        # a = [batch_size, 1, seq_len]
+        a = self.attention_net(s, encoder_output).transpose(1,2)
+
+        # c = [batch_size, 1, encoder_hidden_size]
+        c = torch.bmm(a, encoder_output)
+
+        # decoder_input = [batch_size, selen = 1, encoder_hidden_size * 2]
+
+        decoder_input = torch.cat((decoder_input, c), dim=2)
+
+        # decoder_output = [batch_size, seq_len = 1, decoder_hidden_size]
+        # decoder_hidden = [n_layers * num_directions = 1, batch_size, decoder_hidden_size]
+
+        #decoder_hidden = [s, c.transpose(0,1)] in LSTM
+        decoder_hidden = s #in GRU
+
+        decoder_output, decoder_hidden = self.decoder_gru(decoder_input, decoder_hidden)
+
+        # encoder_output = [batch_size, 1, encoder_hidden_size]
+        # dec_output = [batch_size, 1, decoder_hidden_size]
+        # c = [batch_size, 1, encoder_hidden_size]
+
+        # outputs = [batch_size, 1, encoder_hidden_size * 2 + decoder_hidden_size]
+        outputs = torch.cat((decoder_output, c, encoder_output), dim=2)
+
+        # outputs = [batch_size, 1, output_size = 20]
+        outputs = F.relu(self.decoder_fc_1(outputs))
+        outputs = torch.tanh(self.decoder_fc_2(outputs))
+
+        return outputs, decoder_hidden
+
+    def initHiddenEncoder(self, n_batch):
+        return torch.zeros( 1, n_batch , self.encoder_hidden_size)
+
+    def initHiddenDecoder(self, n_batch):
+        return torch.zeros( 1 ,n_batch ,self.decoder_hidden_size)
+
+
+    def forward(self, image_s, pr_s, use_n_im, predict_n_pr, encoder_hidden, decoder_hidden):
+
+        PR  = [pr_s[i] for i in range(use_n_im)]   #pr_s[0].size(0)=batch_size
+        gru_input_features = torch.cat(PR, 1).view(pr_s[0].size(0), 1, -1)  # batchsize, seq_length = 1, output_szie
+        #encoder_output = [batchsize, seq_length = 1, encoder_hidden_size]
+        encoder_output, encoder_hidden = self.GRU_encoder(gru_input_features, encoder_hidden)
+
+        #s = encoder_hidden[0][-1,:,:].unsqueeze(0) # in LSTM
+        s = encoder_hidden[-1,:,:].unsqueeze(0)
+
+        decoder_input = encoder_output[:,-1,:].unsqueeze(1)
+
+        decoder_output, decoder_hidden = self.GRU_decoder(decoder_input, s, encoder_output) #[24, 1, 20]
+
+        decoder_output = decoder_output.view(pr_s[0].size(0), predict_n_pr, -1) #[24, 10, 2]
+
+        return decoder_output, encoder_hidden, decoder_hidden
+
+class GRU_encoder_attention_decoder_PR_many(nn.Module):
+        def __init__(self, cuda=True, encoder_input_size=10, encoder_hidden_size=300, decoder_hidden_size=300,
+                     output_size=20):
+            super(GRU_encoder_attention_decoder_PR_many, self).__init__()
+            self.cuda_p = cuda
+            self.encoder_hidden_size = encoder_hidden_size
+            self.decoder_hidden_size = decoder_hidden_size
+
+            self.encoder_gru = nn.GRU(encoder_input_size, encoder_hidden_size, batch_first=True)
+
+            self.attn = nn.Linear(encoder_hidden_size + decoder_hidden_size, decoder_hidden_size, bias=False)
+            self.v = nn.Linear(decoder_hidden_size, 1, bias=False)
+
+            self.decoder_gru = nn.GRU(decoder_hidden_size * 2, decoder_hidden_size, batch_first=True)
+
+            self.decoder_fc_0 = nn.Linear(output_size, decoder_hidden_size) #for the decoder_input
+            self.decoder_fc_1 = nn.Linear(decoder_hidden_size + encoder_hidden_size , int(decoder_hidden_size / 2))
+            self.decoder_fc_2 = nn.Linear(int(decoder_hidden_size / 2), output_size)
+
+        def GRU_encoder(self, inputs, hiddens):
+            outputs, hiddens = self.encoder_gru(inputs, hiddens)
+            return outputs, hiddens
+
+        def attention_net(self, s, encoder_output):
+            # s = [1, batch_size, decoder_hidden_size]
+            # encoder_output = [batch_size, seq_len, encoder_hidden_size]
+
+            batch_size = encoder_output.shape[0]
+            seq_len = encoder_output.shape[1]
+
+            # repeat decoder hidden state seq_length times
+            # s = [seq_len, batch_size, dedcoder_hidden_size]
+            # encoder_output = [batch_size, seq_length, encoder_hidden_size]
+            s = s.repeat(seq_len, 1, 1)
+
+            # energy = [batch_size, seq_len, decoder_hiden_size]
+            energy = torch.tanh(self.attn(torch.cat((s.transpose(0, 1), encoder_output), dim=2)))
+
+            # attention = [batch_size, seq_len, 1]
+            attention = self.v(energy)
+
+            return F.softmax(attention, dim=1)
+
+        def GRU_decoder(self, decoder_input, s, encoder_output):
+            # decoder_input = [batch_size, 1, output_size = 20]
+            # s = [1, batch_size, decoder_hidden_size]
+            # encoder_output = [batch_size, seq_length = 10, encoder_hidden_size]
+            # a = [batch_size, 1, seq_len]
+            a = self.attention_net(s, encoder_output).transpose(1, 2)
+
+            # c = [batch_size, 1, encoder_hidden_size]
+            c = torch.bmm(a, encoder_output)
+
+            # decoder_input = [batch_size, seq_len = 1, encoder_hidden_size * 2]
+
+            decoder_input = torch.cat((decoder_input, c), dim=2)
+
+            # decoder_output = [batch_size, seq_len = 1, decoder_hidden_size]
+            # decoder_hidden = [n_layers * num_directions = 1, batch_size, decoder_hidden_size]
+
+            # decoder_hidden = [s, c.transpose(0,1)] in LSTM
+            decoder_hidden = s  # in GRU
+
+
+            decoder_output, decoder_hidden = self.decoder_gru(decoder_input, decoder_hidden)
+
+            # encoder_output = [batch_size, 1, encoder_hidden_size]
+            # c = [batch_size, 1, encoder_hidden_size]
+
+            # outputs = [batch_size, 1, encoder_hidden_size * 2 + decoder_hidden_size]
+            outputs = torch.cat((decoder_output, c), dim=2)
+
+
+            # outputs = [batch_size, 1, output_size = 20]
+            outputs = F.relu(self.decoder_fc_1(outputs))
+            outputs = torch.tanh(self.decoder_fc_2(outputs))
+
+            return outputs, decoder_hidden
+
+        def initHiddenEncoder(self, n_batch):
+            return torch.zeros(1, n_batch, self.encoder_hidden_size)
+
+        def initHiddenDecoder(self, n_batch):
+            return torch.zeros(1, n_batch, self.decoder_hidden_size)
+
+        def forward(self, image_s, pr_s, use_n_im, predict_n_pr, encoder_hidden, decoder_hidden):
+
+            PR = [pr_s[i] for i in range(use_n_im)]
+            gru_input_features = torch.cat(PR, 1).view(pr_s[0].size(0), use_n_im, -1)  # (24,10,2)
+            encoder_output, encoder_hidden = self.GRU_encoder(gru_input_features, encoder_hidden)
+
+            if self.cuda_p:
+                output = torch.zeros(pr_s[0].size(0), 1, 2).cuda()
+            else:
+                output = torch.zeros(pr_s[0].size(0), 1, 2)
+
+            decoder_input = torch.tanh(self.decoder_fc_0(gru_input_features[:, -1, :].unsqueeze(1)))
+
+            s = encoder_hidden[-1, :, :].unsqueeze(0) #[1, batch_size, encoder_hidden_size]
+
+            for t in range(0, predict_n_pr):
+                # decoder_output = [batch_size, 1, output_size = 2]
+
+                decoder_output, s = self.GRU_decoder(decoder_input, s, encoder_output)
+
+                output = torch.cat([output, decoder_output], 1)
+
+                top1 = decoder_output.argmax(1).float().unsqueeze(1)
+
+                decoder_input = torch.tanh(self.decoder_fc_0(top1))
+
+            # output = [batchize, predict_n_pr +1 , output_size = 2]
+            output = output[:, 1:, :]
+            decoder_hidden = s
+            # output = [batch_size, predict_n_pr, output_size = 2]
+
+            return output, encoder_hidden, decoder_hidden
+
+class LSTM_encoder_attention_decoder_PR(nn.Module):
+    def __init__(self, cuda = True, encoder_input_size = 10, encoder_hidden_size = 300, batch_size = 12, decoder_hidden_size = 300,  output_size = 20):
+        super(LSTM_encoder_attention_decoder_PR, self).__init__()
+        self.cuda_p = cuda
+        self.encoder_hidden_size = encoder_hidden_size
+        self.decoder_hidden_size = decoder_hidden_size
+        #self.sequence_length = 1
+
+
+        self.encoder_lstm = nn.LSTM(encoder_input_size, encoder_hidden_size, batch_first=True)     #batch_first only influences the input, not the hidden
+
+        self.attn = nn.Linear(encoder_hidden_size + decoder_hidden_size, decoder_hidden_size, bias=False)
+        self.v = nn.Linear(decoder_hidden_size, 1, bias=False)
+
+
+        self.decoder_lstm = nn.LSTM(encoder_hidden_size * 2, decoder_hidden_size, batch_first=True)
+
+        self.decoder_fc_1 = nn.Linear(encoder_hidden_size + decoder_hidden_size*2, int(decoder_hidden_size/2))
+        self.decoder_fc_2 = nn.Linear(int(decoder_hidden_size/2), output_size)
+
+
+    def LSTM_encoder(self, inputs, hiddens):
+        outputs, hiddens = self.encoder_lstm(inputs, hiddens)
+        return outputs, hiddens
+
+    def attention_net(self, s, encoder_output):
+        # s = [1, batch_size, decoder_hidden_size]
+        # encoder_output = [batch_size, seq_len, encoder_hidden_size]
+
+        batch_size = encoder_output.shape[0]
+        seq_len = encoder_output.shape[1]
+
+        # repeat decoder hidden state seq_length times
+        # s = [seq_len, batch_size, dedcoder_hidden_size]
+        # encoder_output = [batch_size, seq_length, encoder_hidden_size]
+        s = s.repeat(seq_len, 1, 1)
+
+        # energy = [batch_size, seq_len, decoder_hiden_size]
+        energy = torch.tanh(self.attn(torch.cat((s.transpose(0,1), encoder_output), dim=2)))
+
+        # attention = [batch_size, seq_len, 1]
+        attention = self.v(energy)
+
+        return F.softmax(attention, dim=1)
+
+
+    def LSTM_decoder(self, decoder_input, s, encoder_output):
+
+        # decoder_input = [batch_size, 1, output_size = 20]
+        # s = [1, batch_size, decoder_hidden_size]
+        # encoder_output = [batch_size, seq_length = 1, encoder_hidden_size]
+
+        # a = [batch_size, 1, seq_len]
+
+        a = self.attention_net(s, encoder_output).transpose(1,2)
+
+        # c = [batch_size, 1, encoder_hidden_size]
+        c = torch.bmm(a, encoder_output)
+
+        # decoder_input = [batch_size, selen = 1, encoder_hidden_size * 2]
+
+        decoder_input = torch.cat((decoder_input, c), dim=2)
+
+        # decoder_output = [batch_size, seq_len = 1, decoder_hidden_size]
+        # decoder_hidden = [n_layers * num_directions = 1, batch_size, decoder_hidden_size]
+
+        decoder_hidden = [s, c.transpose(0,1)]
+
+        decoder_output, decoder_hidden = self.decoder_lstm(decoder_input, decoder_hidden)
+
+        # encoder_output = [batch_size, 1, encoder_hidden_size]
+        # dec_output = [batch_size, 1, decoder_hidden_size]
+        # c = [batch_size, 1, encoder_hidden_size]
+
+        # outputs = [batch_size, 1, encoder_hidden_size * 2 + decoder_hidden_size]
+        outputs = torch.cat((decoder_output, c, encoder_output), dim=2)
+
+        # outputs = [batch_size, 1, output_size = 20]
+        outputs = F.relu(self.decoder_fc_1(outputs))
+        outputs = torch.tanh(self.decoder_fc_2(outputs))
+
+        return outputs, decoder_hidden
+
+    def initHiddenEncoder(self, n_batch):
+        return torch.zeros( 1, n_batch , self.encoder_hidden_size)
+
+    def initHiddenDecoder(self, n_batch):
+        return torch.zeros( 1 ,n_batch ,self.decoder_hidden_size)
+
+
+    def forward(self, image_s, pr_s, use_n_im, predict_n_pr, encoder_hidden, decoder_hidden):
+
+        PR  = [pr_s[i] for i in range(use_n_im)]   #pr_s[0].size(0)=batch_size
+        lstm_input_features = torch.cat(PR, 1).view(pr_s[0].size(0), 1, -1)  # batchsize, seq_length = 1, output_szie
+
+        encoder_output, encoder_hidden = self.LSTM_encoder(lstm_input_features, encoder_hidden)
+
+        s = encoder_hidden[0][-1,:,:].unsqueeze(0)
+        decoder_input = encoder_output[:,-1,:].unsqueeze(1)
+
+        decoder_output, decoder_hidden = self.LSTM_decoder(decoder_input, s, encoder_output) #[24, 1, 20]
+
+        decoder_output = decoder_output.view(pr_s[0].size(0), predict_n_pr, -1) #[24, 10, 2]
+
+        return decoder_output, encoder_hidden, decoder_hidden
+
+
+class LSTM_encoder_GRU_attention_decoder_PR(nn.Module):
+    def __init__(self, cuda = True, encoder_input_size = 10, encoder_hidden_size = 300, batch_size = 12, decoder_hidden_size = 300,  output_size = 20):
+        super(LSTM_encoder_GRU_attention_decoder_PR, self).__init__()
+        self.cuda_p = cuda
+        self.encoder_hidden_size = encoder_hidden_size
+        self.decoder_hidden_size = decoder_hidden_size
+        #self.sequence_length = 1
+
+
+        self.encoder_lstm = nn.LSTM(encoder_input_size, encoder_hidden_size, batch_first=True)     #batch_first only influences the input, not the hidden
+
+        self.attn = nn.Linear(encoder_hidden_size + decoder_hidden_size, decoder_hidden_size, bias=False)
+        self.v = nn.Linear(decoder_hidden_size, 1, bias=False)
+
+
+        self.decoder_gru = nn.GRU(encoder_hidden_size * 2, decoder_hidden_size, batch_first=True)
+
+        self.decoder_fc_1 = nn.Linear(encoder_hidden_size * 2 + decoder_hidden_size, int(decoder_hidden_size/2))
+        self.decoder_fc_2 = nn.Linear(int(decoder_hidden_size/2), output_size)
+
+
+    def LSTM_encoder(self, inputs, hiddens):
+        outputs, hiddens = self.encoder_lstm(inputs, hiddens)
+        return outputs, hiddens
+
+    def attention_net(self, s, encoder_output):
+        # s = [1, batch_size, decoder_hidden_size]
+        # encoder_output = [batch_size, seq_len, encoder_hidden_size]
+
+        batch_size = encoder_output.shape[0]
+        seq_len = encoder_output.shape[1]
+
+        # repeat decoder hidden state seq_length times
+        # s = [seq_len, batch_size, dedcoder_hidden_size]
+        # encoder_output = [batch_size, seq_length, encoder_hidden_size]
+        s = s.repeat(seq_len, 1, 1)
+
+        # energy = [batch_size, seq_len, decoder_hiden_size]
+        energy = torch.tanh(self.attn(torch.cat((s.transpose(0,1), encoder_output), dim=2)))
+
+        # attention = [batch_size, seq_len, 1]
+        attention = self.v(energy)
+
+        return F.softmax(attention, dim=1)
+
+
+    def LSTM_decoder(self, decoder_input, s, encoder_output):
+
+        # decoder_input = [batch_size, 1, output_size = 20]
+        # s = [1, batch_size, decoder_hidden_size]
+        # encoder_output = [batch_size, seq_length = 1, encoder_hidden_size]
+
+        # a = [batch_size, 1, seq_len]
+
+        a = self.attention_net(s, encoder_output).transpose(1,2)
+
+        # c = [batch_size, 1, encoder_hidden_size]
+        c = torch.bmm(a, encoder_output)
+
+        # decoder_input = [batch_size, seq_len = 1, encoder_hidden_size * 2]
+
+        decoder_input = torch.cat((decoder_input, c), dim=2)
+
+        # decoder_output = [batch_size, seq_len = 1, decoder_hidden_size]
+        # decoder_hidden = [n_layers * num_directions = 1, batch_size, decoder_hidden_size]
+
+        #decoder_hidden = [s, c.transpose(0,1)] #in LSTM
+        decoder_hidden = s #in GRU
+
+        decoder_output, decoder_hidden = self.decoder_gru(decoder_input, decoder_hidden)
+
+        # encoder_output = [batch_size, 1, encoder_hidden_size]
+        # dec_output = [batch_size, 1, decoder_hidden_size]
+        # c = [batch_size, 1, encoder_hidden_size]
+
+        # outputs = [batch_size, 1, encoder_hidden_size * 2 + decoder_hidden_size]
+        outputs = torch.cat((decoder_output, c, encoder_output), dim=2)
+
+        # outputs = [batch_size, 1, output_size = 20]
+        outputs = F.relu(self.decoder_fc_1(outputs))
+        outputs = torch.tanh(self.decoder_fc_2(outputs))
+
+        return outputs, decoder_hidden
+
+    def initHiddenEncoder(self, n_batch):
+        return torch.zeros( 1, n_batch , self.encoder_hidden_size)
+
+    def initHiddenDecoder(self, n_batch):
+        return torch.zeros( 1 ,n_batch ,self.decoder_hidden_size)
+
+
+    def forward(self, image_s, pr_s, use_n_im, predict_n_pr, encoder_hidden, decoder_hidden):
+
+        PR  = [pr_s[i] for i in range(use_n_im)]   #pr_s[0].size(0)=batch_size
+        lstm_input_features = torch.cat(PR, 1).view(pr_s[0].size(0), 1, -1)  # [batchsize, seq_length = 1, output_szie]
+        #encoder_output = [batchsize, seq_length = 1, encoder_hidden_size]
+        encoder_output, encoder_hidden = self.LSTM_encoder(lstm_input_features, encoder_hidden)
+
+        s = encoder_hidden[0][-1,:,:].unsqueeze(0)
+        decoder_input = encoder_output[:,-1,:].unsqueeze(1)
+
+        decoder_output, decoder_hidden = self.LSTM_decoder(decoder_input, s, encoder_output) #[24, 1, 20]
+
+        decoder_output = decoder_output.view(pr_s[0].size(0), predict_n_pr, -1) #[24, 10, 2]
+
+        return decoder_output, encoder_hidden, decoder_hidden
+
+
+class LSTM_encoder_decoder_PR_many(nn.Module):
+    def __init__(self, cuda = True, encoder_input_size = 10, encoder_hidden_size = 300, decoder_hidden_size = 300,  output_size = 20):
+        super(LSTM_encoder_decoder_PR_many, self).__init__()
+        self.cuda_p = cuda
+        self.encoder_hidden_size = encoder_hidden_size
+        self.decoder_hidden_size = decoder_hidden_size
+
+        self.encoder_lstm = nn.LSTM(encoder_input_size, encoder_hidden_size, batch_first= True)
+        self.decoder_lstm = nn.LSTM(decoder_hidden_size, decoder_hidden_size,batch_first= True)
+
+        self.decoder_fc_0 = nn.Linear(output_size, decoder_hidden_size)
+        self.decoder_fc_1 = nn.Linear(decoder_hidden_size, int(decoder_hidden_size/2))
+        self.decoder_fc_2 = nn.Linear(int(decoder_hidden_size/2), output_size)
+
+
+    def LSTM_encoder(self, inputs, hiddens):
+        outputs, hiddens = self.encoder_lstm(inputs, hiddens)
+        return outputs, hiddens
+
+
+    def LSTM_decoder(self, inputs, hiddens):
+        outputs = F.relu(inputs)
+        outputs, hiddens = self.decoder_lstm(outputs, hiddens)
+
+        outputs = F.relu(self.decoder_fc_1(outputs))
+        outputs = torch.tanh(self.decoder_fc_2(outputs))
+        return outputs, hiddens
+
+
+    def initHiddenEncoder(self, n_batch):
+        return torch.zeros(1, n_batch ,self.encoder_hidden_size)
+
+
+    def initHiddenDecoder(self, n_batch):
+        return torch.zeros(1, n_batch  ,self.decoder_hidden_size)
+
+
+    def forward(self, image_s, pr_s, use_n_im, predict_n_pr, encoder_hidden, decoder_hidden):
+
+        PR  = [pr_s[i] for i in range(use_n_im)]
+        lstm_input_features = torch.cat(PR, 1).view(pr_s[0].size(0), use_n_im, -1) #(24,10,2)
+
+
+        encoder_output, encoder_hidden = self.LSTM_encoder(lstm_input_features, encoder_hidden)
+
+
+        if self.cuda_p:
+             output = torch.zeros(pr_s[0].size(0), 1, 2).cuda()
+        else:
+             output = torch.zeros(pr_s[0].size(0), 1, 2)
+
+        decoder_input = torch.tanh(self.decoder_fc_0(lstm_input_features[:,-1,:].unsqueeze(1)))
+        decoder_hidden = encoder_hidden
+
+
+        for t in range(0, predict_n_pr):
+            #decoder_output = [batch_size, 1, output_size = 2]
+            decoder_output, decoder_hidden = self.LSTM_decoder(decoder_input,decoder_hidden)
+            output = torch.cat([output, decoder_output], 1)
+        #output = [batchize, 11, output_size = 2]
+        output = output[:,1:,: ]
+        #output = [batch_size, 10, output_size = 2]
+        return output, encoder_hidden, decoder_hidden
+
+
+class LSTM_encoder_attention_decoder_PR_many(nn.Module):
+    def __init__(self, cuda=True, encoder_input_size=10, encoder_hidden_size=300, decoder_hidden_size=300,
+                 output_size=20):
+        super(LSTM_encoder_attention_decoder_PR_many, self).__init__()
+        self.cuda_p = cuda
+        self.encoder_hidden_size = encoder_hidden_size
+        self.decoder_hidden_size = decoder_hidden_size
+
+        self.encoder_lstm = nn.LSTM(encoder_input_size, encoder_hidden_size, batch_first=True)
+
+        self.attn = nn.Linear(encoder_hidden_size + decoder_hidden_size, decoder_hidden_size, bias=False)
+        self.v = nn.Linear(decoder_hidden_size, 1, bias=False)
+
+        self.decoder_lstm = nn.LSTM(decoder_hidden_size * 2, decoder_hidden_size, batch_first=True)
+
+        self.decoder_fc_0 = nn.Linear(output_size, decoder_hidden_size)  # for the decoder_input
+        self.decoder_fc_1 = nn.Linear(decoder_hidden_size + encoder_hidden_size, int(decoder_hidden_size / 2))
+        self.decoder_fc_2 = nn.Linear(int(decoder_hidden_size / 2), output_size)
+
+    def LSTM_encoder(self, inputs, hiddens):
+        outputs, hiddens = self.encoder_lstm(inputs, hiddens)
+        return outputs, hiddens
+
+    def attention_net(self, s, encoder_output):
+        # s = [1, batch_size, decoder_hidden_size]
+        # encoder_output = [batch_size, seq_len, encoder_hidden_size]
+
+        batch_size = encoder_output.shape[0]
+        seq_len = encoder_output.shape[1]
+
+        # repeat decoder hidden state seq_length times
+        # s = [seq_len, batch_size, dedcoder_hidden_size]
+        # encoder_output = [batch_size, seq_length, encoder_hidden_size]
+
+        s = s[0].repeat(seq_len, 1, 1)
+
+        # energy = [batch_size, seq_len, decoder_hiden_size]
+        energy = torch.tanh(self.attn(torch.cat((s.transpose(0, 1), encoder_output), dim=2)))
+
+
+        # attention = [batch_size, seq_len, 1]
+        attention = self.v(energy)
+
+        return F.softmax(attention, dim=1)
+
+    def LSTM_decoder(self, decoder_input, s, encoder_output):
+        # decoder_input = [batch_size, 1, output_size = 20]
+        # s = [1, batch_size, decoder_hidden_size]
+        # encoder_output = [batch_size, seq_length = 1, encoder_hidden_size]
+
+        # a = [batch_size, 1, seq_len]
+        a = self.attention_net(s, encoder_output).transpose(1, 2)
+
+
+        # c = [batch_size, 1, encoder_hidden_size]
+        c = torch.bmm(a, encoder_output)
+
+
+        # decoder_input = [batch_size, selen = 1, encoder_hidden_size * 2]
+        decoder_input = torch.cat((decoder_input, c), dim=2)
+
+        # decoder_output = [batch_size, seq_len = 1, decoder_hidden_size]
+        # decoder_hidden = [n_layers * num_directions = 1, batch_size, decoder_hidden_size]
+
+        decoder_hidden = s
+
+        decoder_output, decoder_hidden = self.decoder_lstm(decoder_input, decoder_hidden)
+
+        # encoder_output = [batch_size, 1, encoder_hidden_size]
+        # dec_output = [batch_size, 1, decoder_hidden_size]
+        # c = [batch_size, 1, encoder_hidden_size]
+
+        # outputs = [batch_size, 1, encoder_hidden_size * 2 + decoder_hidden_size]
+        outputs = torch.cat((decoder_output, c), dim=2)
+
+        # outputs = [batch_size, 1, output_size = 20]
+        outputs = F.relu(self.decoder_fc_1(outputs))
+        outputs = torch.tanh(self.decoder_fc_2(outputs))
+
+        return outputs, decoder_hidden
+
+    def initHiddenEncoder(self, n_batch):
+        return torch.zeros(1, n_batch, self.encoder_hidden_size)
+
+    def initHiddenDecoder(self, n_batch):
+        return torch.zeros(1, n_batch, self.decoder_hidden_size)
+
+    def forward(self, image_s, pr_s, use_n_im, predict_n_pr, encoder_hidden, decoder_hidden):
+
+        PR = [pr_s[i] for i in range(use_n_im)]
+        lstm_input_features = torch.cat(PR, 1).view(pr_s[0].size(0), use_n_im, -1)  # (24,10,2)
+        encoder_output, encoder_hidden = self.LSTM_encoder(lstm_input_features, encoder_hidden)
+
+        if self.cuda_p:
+            output = torch.zeros(pr_s[0].size(0), 1, 2).cuda()
+        else:
+            output = torch.zeros(pr_s[0].size(0), 1, 2)
+
+        decoder_input = torch.tanh(self.decoder_fc_0(lstm_input_features[:, -1, :].unsqueeze(1)))
+
+        # s = encoder_hidden[-1, :, :].unsqueeze(0) # for GRU
+        s = encoder_hidden  # for LSTM
+
+        for t in range(0, predict_n_pr):
+            # decoder_output = [batch_size, 1, output_size = 2]
+
+            decoder_output, s = self.LSTM_decoder(decoder_input, s, encoder_output)
+
+            output = torch.cat([output, decoder_output], 1)
+            top1 = decoder_output.argmax(1).float().unsqueeze(1)
+            decoder_input = torch.tanh(self.decoder_fc_0(top1))
+
+        # output = [batchize, predict_n_pr +1 , output_size = 2]
+        output = output[:, 1:, :]
+        decoder_hidden = s
+        # output = [batch_size, predict_n_pr, output_size = 2]
+
+        return output, encoder_hidden, decoder_hidden
+
+
+class CNN_LSTM_encoder_decoder_images_PR_many (nn.Module):
+    def __init__(self, cuda = True, h_dim=2688, z_dim=1024, encoder_input_size = 4096, encoder_hidden_size = 300,  decoder_input_size = 300, decoder_hidden_size = 150, output_size = 20):
+        super(CNN_LSTM_encoder_decoder_images_PR_many, self).__init__()
+        self.cuda_p = cuda
+        self.encoder_hidden_size = encoder_hidden_size
+        self.decoder_hidden_size = decoder_hidden_size
+
+        self.encoder = nn.Sequential(
+            nn.Conv2d(3, 8, kernel_size=5, stride=1, padding=2),
+            # nn.BatchNorm2d(8),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size= 3, stride=2, padding=1),
+            nn.Conv2d(8, 16, kernel_size=3, stride=1, padding=1),
+            # nn.BatchNorm2d(16),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding = 1),
+            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1, bias=False),
+            # nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding = 1),
+        )
+
+        self.mu = nn.Linear(int(h_dim), z_dim)
+        self.std = nn.Linear(int(h_dim), z_dim)
+
+        self.encoder_lstm = nn.LSTM(encoder_input_size, encoder_hidden_size, batch_first=True)
+
+        self.decoder_lstm = nn.LSTM(decoder_input_size, decoder_hidden_size, batch_first=True)
+
+        self.decoder_fc_0 = nn.Linear(1026, decoder_hidden_size)
+        self.decoder_fc_1 = nn.Linear(decoder_hidden_size, int(decoder_hidden_size/2))
+        self.decoder_fc_2 = nn.Linear(int(decoder_hidden_size/2), output_size)
+
+
+    def reparameterize(self, mu, logvar):
+        std = logvar.mul(0.5).exp_()
+        esp = torch.randn(*mu.size())
+        if self.cuda_p:
+            esp = esp.cuda()
+        z = mu + std * esp
+        return z
+
+
+    def bottleneck(self, h):
+        mu  = self.mu(h)
+        logvar = F.relu(self.std(h))
+        z = self.reparameterize(mu, logvar)
+        return z
+
+
+    def encode(self, x):
+        h = self.encoder(x)
+        h = h.view(h.size(0), -1)
+        z = self.bottleneck(h)
+        return z
+
+
+    def LSTM_encoder(self, inputs, hiddens):
+        outputs, hiddens = self.encoder_lstm(inputs, hiddens)
+        return outputs, hiddens
+
+
+    def LSTM_decoder(self, inputs, hiddens):
+        outputs = F.relu(inputs)
+        outputs, hiddens = self.decoder_lstm(outputs, hiddens)
+        outputs = F.relu(self.decoder_fc_1(outputs))
+        outputs = torch.tanh(self.decoder_fc_2(outputs))
+        return outputs, hiddens
+
+
+    def initHiddenEncoder(self, n_batch):
+        return  torch.zeros(1, n_batch  ,self.encoder_hidden_size)
+
+
+    def initHiddenDecoder(self, n_batch):
+        return  torch.zeros(1, n_batch  ,self.decoder_hidden_size)
+
+
+    def forward(self, image_s, pr_s, use_n_im, predict_n_pr, encoder_hidden, decoder_hidden):
+
+        features = [self.encode( image_s[i] ) for i in range(use_n_im)]
+
+        PR  = [pr_s[i] for i in range(use_n_im)]
+
+        lstm_input_features = [ torch.cat((features[i], PR[i]), 1).view(image_s[0].size(0), 1, -1) for i in range(use_n_im)]
+        lstm_input_features = torch.cat(lstm_input_features, 2).view(image_s[0].size(0),use_n_im , -1)
+
+        encoder_output, encoder_hidden = self.LSTM_encoder(lstm_input_features,  encoder_hidden)
+
+        if self.cuda_p:
+             output = torch.zeros(pr_s[0].size(0), 1, 2).cuda()
+        else:
+             output = torch.zeros(pr_s[0].size(0), 1, 2)
+
+        decoder_input = torch.tanh(self.decoder_fc_0(lstm_input_features[:,-1,:].unsqueeze(1)))
+        decoder_hidden = encoder_hidden
+
+
+        for t in range(0, predict_n_pr):
+            #decoder_output = [batch_size, 1, output_size = 2]
+            decoder_output, decoder_hidden = self.LSTM_decoder(decoder_input,decoder_hidden)
+            output = torch.cat([output, decoder_output], 1)
+        #output = [batchize, 11, output_size = 2]
+        output = output[:,1:,: ]
+        #output = [batch_size, 10, output_size = 2]
+        return output, encoder_hidden, decoder_hidden
+
+class CNN_LSTM_encoder_GRU_decoder_images_PR (nn.Module):
+    def __init__(self, cuda = True, h_dim=2688, z_dim=1024, encoder_input_size = 4096, encoder_hidden_size = 300,  decoder_input_size = 300, decoder_hidden_size = 150, output_size = 20):
+        super(CNN_LSTM_encoder_GRU_decoder_images_PR, self).__init__()
+        self.cuda_p = cuda
+        self.encoder_hidden_size = encoder_hidden_size
+        self.decoder_hidden_size = decoder_hidden_size
+
+        self.encoder = nn.Sequential(
+            nn.Conv2d(3, 8, kernel_size=5, stride=1, padding=2),
+            # nn.BatchNorm2d(8),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size= 3, stride=2, padding=1),
+            nn.Conv2d(8, 16, kernel_size=3, stride=1, padding=1),
+            # nn.BatchNorm2d(16),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding = 1),
+            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1, bias=False),
+            # nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding = 1),
+        )
+
+        self.mu = nn.Linear(int(h_dim), z_dim)
+        self.std = nn.Linear(int(h_dim), z_dim)
+
+        self.encoder_lstm = nn.LSTM(encoder_input_size, encoder_hidden_size, batch_first=True)
+
+        self.decoder_gru = nn.GRU(decoder_input_size, decoder_hidden_size, batch_first=True)
+
+        self.decoder_fc_1 = nn.Linear(decoder_hidden_size, int(decoder_hidden_size/2))
+        self.decoder_fc_2 = nn.Linear(int(decoder_hidden_size/2), output_size)
+
+
+    def reparameterize(self, mu, logvar):
+        std = logvar.mul(0.5).exp_()
+        esp = torch.randn(*mu.size())
+        if self.cuda_p:
+            esp = esp.cuda()
+        z = mu + std * esp
+        return z
+
+
+    def bottleneck(self, h):
+        mu  = self.mu(h)
+        logvar = F.relu(self.std(h))
+        z = self.reparameterize(mu, logvar)
+        return z
+
+
+    def encode(self, x):
+        h = self.encoder(x)
+        h = h.view(h.size(0), -1)
+        z = self.bottleneck(h)
+        return z
+
+
+    def LSTM_encoder(self, inputs, hiddens):
+        outputs, hiddens = self.encoder_lstm(inputs, hiddens)
+        return outputs, hiddens
+
+
+    def GRU_decoder(self, inputs, hiddens):
+        outputs = F.relu(inputs)
+        outputs, hiddens = self.decoder_gru(outputs, hiddens)
+        outputs = F.relu(self.decoder_fc_1(outputs))
+        outputs = torch.tanh(self.decoder_fc_2(outputs))
+        return outputs, hiddens
+
+
+    def initHiddenEncoder(self, n_batch):
+        return  torch.zeros(1, n_batch  ,self.encoder_hidden_size)
+
+
+    def initHiddenDecoder(self, n_batch):
+        return  torch.zeros(1, n_batch  ,self.decoder_hidden_size)
+
+
+    def forward(self, image_s, pr_s, use_n_im, predict_n_pr, encoder_hidden, decoder_hidden):
+
+        features = [self.encode( image_s[i] ) for i in range(use_n_im)]
+        #print(len(features))
+        #print(len(features[0][0]))
+        PR  = [pr_s[i] for i in range(use_n_im)]
+
+        lstm_input_features = [ torch.cat((features[i], PR[i]), 1).view(image_s[0].size(0), 1, -1) for i in range(use_n_im)]
+        lstm_input_features = torch.cat(lstm_input_features, 1).view(image_s[0].size(0), use_n_im, -1)
+
+        if self.cuda_p:
+             output = torch.zeros(pr_s[0].size(0), 1, 2).cuda()
+        else:
+             output = torch.zeros(pr_s[0].size(0), 1, 2)
+
+        decoder_input = torch.tanh(self.decoder_fc_0(lstm_input_features[:,-1,:].unsqueeze(1)))
+        decoder_hidden = encoder_hidden
+
+
+        for t in range(0, predict_n_pr):
+            #decoder_output = [batch_size, 1, output_size = 2]
+            decoder_output, decoder_hidden = self.LSTM_decoder(decoder_input,decoder_hidden)
+            output = torch.cat([output, decoder_output], 1)
+        #output = [batchize, 11, output_size = 2]
+        output = output[:,1:,: ]
+        #output = [batch_size, 10, output_size = 2]
+        return output, encoder_hidden, decoder_hidden
+
+
+class CNN_LSTM_encoder_attention_decoder_images_PR (nn.Module):
+    def __init__(self, cuda = True, h_dim=2688, z_dim=1024, encoder_input_size = 4096, encoder_hidden_size = 300,  decoder_input_size = 600, decoder_hidden_size = 150, output_size = 20):
+        super(CNN_LSTM_encoder_attention_decoder_images_PR, self).__init__()
+        self.cuda_p = cuda
+        self.encoder_hidden_size = encoder_hidden_size
+        self.decoder_hidden_size = decoder_hidden_size
+
+        self.encoder = nn.Sequential(
+            nn.Conv2d(3, 8, kernel_size=5, stride=1, padding=2),
+            # nn.BatchNorm2d(8),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size= 3, stride=2, padding=1),
+            nn.Conv2d(8, 16, kernel_size=3, stride=1, padding=1),
+            # nn.BatchNorm2d(16),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding = 1),
+            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1, bias=False),
+            # nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding = 1),
+        )
+
+        self.mu = nn.Linear(int(h_dim), z_dim)
+        self.std = nn.Linear(int(h_dim), z_dim)
+
+        self.encoder_lstm = nn.LSTM(encoder_input_size, encoder_hidden_size, batch_first=True)
+
+        self.attn = nn.Linear(encoder_hidden_size + decoder_hidden_size, decoder_hidden_size, bias=False)
+        self.v = nn.Linear(decoder_hidden_size, 1, bias=False)
+
+        self.decoder_lstm = nn.LSTM(decoder_input_size, decoder_hidden_size, batch_first=True)
+
+        self.decoder_fc_0 = nn.Linear(encoder_input_size, decoder_hidden_size)
+        self.decoder_fc_1 = nn.Linear(decoder_hidden_size + encoder_hidden_size*2, int(decoder_hidden_size / 2))
+        self.decoder_fc_2 = nn.Linear(int(decoder_hidden_size / 2), output_size)
+
+
+    def reparameterize(self, mu, logvar):
+        std = logvar.mul(0.5).exp_()
+        esp = torch.randn(*mu.size())
+        if self.cuda_p:
+            esp = esp.cuda()
+        z = mu + std * esp
+        return z
+
+
+    def bottleneck(self, h):
+        mu  = self.mu(h)
+        logvar = F.relu(self.std(h))
+        z = self.reparameterize(mu, logvar)
+        return z
+
+
+    def encode(self, x):
+        h = self.encoder(x)
+        h = h.view(h.size(0), -1)
+        z = self.bottleneck(h)
+        return z
+
+
+    def LSTM_encoder(self, inputs, hiddens):
+        outputs, hiddens = self.encoder_lstm(inputs, hiddens)
+        return outputs, hiddens
+
+    def attention_net(self, s, encoder_output):
+        # s = [1, batch_size, decoder_hidden_size]
+        # encoder_output = [batch_size, seq_len, encoder_hidden_size]
+
+        batch_size = encoder_output.shape[0]
+        seq_len = encoder_output.shape[1]
+
+        # repeat decoder hidden state seq_length times
+        # s = [seq_len, batch_size, dedcoder_hidden_size]
+        # encoder_output = [batch_size, seq_length, encoder_hidden_size]
+        s = s.repeat(seq_len, 1, 1)
+
+        # energy = [batch_size, seq_len, decoder_hiden_size]
+        energy = torch.tanh(self.attn(torch.cat((s.transpose(0,1), encoder_output), dim=2)))
+
+        # attention = [batch_size, seq_len, 1]
+        attention = self.v(energy)
+
+        return F.softmax(attention, dim=1)
+
+
+    def LSTM_decoder(self, decoder_input, s, encoder_output):
+
+        # decoder_input = [batch_size, 1, output_size = 20]
+        # s = [1, batch_size, decoder_hidden_size]
+        # encoder_output = [batch_size, seq_length = 1, encoder_hidden_size]
+
+        # a = [batch_size, 1, seq_len]
+
+        a = self.attention_net(s, encoder_output).transpose(1,2)
+
+        # c = [batch_size, 1, encoder_hidden_size]
+        c = torch.bmm(a, encoder_output)
+        # decoder_input = [batch_size, selen = 1, encoder_hidden_size * 2]
+
+        decoder_input = torch.cat((decoder_input, c), dim=2)
+        # decoder_output = [batch_size, seq_len = 1, decoder_hidden_size]
+        # decoder_hidden = [n_layers * num_directions = 1, batch_size, decoder_hidden_size]
+
+        decoder_hidden = [s, c.transpose(0,1)]
+
+
+
+        decoder_output, decoder_hidden = self.decoder_lstm(decoder_input, decoder_hidden)
+        # encoder_output = [batch_size, 1, encoder_hidden_size]
+        # dec_output = [batch_size, 1, decoder_hidden_size]
+        # c = [batch_size, 1, encoder_hidden_size]
+
+        # outputs = [batch_size, 1, encoder_hidden_size * 2 + decoder_hidden_size]
+        outputs = torch.cat((decoder_output, c, encoder_output), dim=2)
+        # outputs = [batch_size, 1, output_size = 20]
+        outputs = F.relu(self.decoder_fc_1(outputs))
+        outputs = torch.tanh(self.decoder_fc_2(outputs))
+
+        return outputs, decoder_hidden
+
+    def initHiddenEncoder(self, n_batch):
+        return  torch.zeros(1, n_batch  ,self.encoder_hidden_size)
+
+
+    def initHiddenDecoder(self, n_batch):
+        return  torch.zeros(1, n_batch  ,self.decoder_hidden_size)
+
+
+    def forward(self, image_s, pr_s, use_n_im, predict_n_pr, encoder_hidden, decoder_hidden):
+
+        features = [self.encode( image_s[i] ) for i in range(use_n_im)]
+        #print(len(features))
+        #print(len(features[0][0]))
+        PR  = [pr_s[i] for i in range(use_n_im)]
+
+        lstm_input_features = [ torch.cat((features[i], PR[i]), 1).view(image_s[0].size(0), 1, -1) for i in range(use_n_im)]
+        lstm_input_features = torch.cat(lstm_input_features, 2).view(image_s[0].size(0), 1, -1)
+
+
+        encoder_output, encoder_hidden = self.LSTM_encoder(lstm_input_features,  encoder_hidden)
+
+
+        s = encoder_hidden[0][-1, :, :].unsqueeze(0)
+
+        #decoder_input = encoder_output[:,-1,:].unsqueeze(1)
+        decoder_input = torch.tanh(self.decoder_fc_0(lstm_input_features[:, -1, :].unsqueeze(1)))
+
+        decoder_output, decoder_hidden = self.LSTM_decoder(decoder_input, s, encoder_output)  # [batch_size, 1, output_size]
+
+        decoder_output = decoder_output.view(image_s[0].size(0), predict_n_pr, -1)
+
+        return decoder_output, encoder_hidden, decoder_hidden
+
+
+class CNN_LSTM_encoder_GRU_attention_decoder_images_PR (nn.Module):
+    def __init__(self, cuda = True, h_dim=2688, z_dim=1024, encoder_input_size = 4096, encoder_hidden_size = 300,  decoder_input_size = 600, decoder_hidden_size = 150, output_size = 20):
+        super(CNN_LSTM_encoder_GRU_attention_decoder_images_PR, self).__init__()
+        self.cuda_p = cuda
+        self.encoder_hidden_size = encoder_hidden_size
+        self.decoder_hidden_size = decoder_hidden_size
+
+        self.encoder = nn.Sequential(
+            nn.Conv2d(3, 8, kernel_size=5, stride=1, padding=2),
+            # nn.BatchNorm2d(8),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size= 3, stride=2, padding=1),
+            nn.Conv2d(8, 16, kernel_size=3, stride=1, padding=1),
+            # nn.BatchNorm2d(16),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding = 1),
+            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1, bias=False),
+            # nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding = 1),
+        )
+
+        self.mu = nn.Linear(int(h_dim), z_dim)
+        self.std = nn.Linear(int(h_dim), z_dim)
+
+        self.encoder_lstm = nn.LSTM(encoder_input_size, encoder_hidden_size, batch_first=True)
+
+        self.attn = nn.Linear(encoder_hidden_size + decoder_hidden_size, decoder_hidden_size, bias=False)
+        self.v = nn.Linear(decoder_hidden_size, 1, bias=False)
+
+        self.decoder_gru = nn.GRU(decoder_input_size, decoder_hidden_size, batch_first=True)
+
+        self.decoder_fc_0 = nn.Linear(encoder_input_size, decoder_hidden_size)
+        self.decoder_fc_1 = nn.Linear(decoder_hidden_size + encoder_hidden_size*2, int(decoder_hidden_size / 2))
+        self.decoder_fc_2 = nn.Linear(int(decoder_hidden_size / 2), output_size)
+
+
+    def reparameterize(self, mu, logvar):
+        std = logvar.mul(0.5).exp_()
+        esp = torch.randn(*mu.size())
+        if self.cuda_p:
+            esp = esp.cuda()
+        z = mu + std * esp
+        return z
+
+
+    def bottleneck(self, h):
+        mu  = self.mu(h)
+        logvar = F.relu(self.std(h))
+        z = self.reparameterize(mu, logvar)
+        return z
+
+
+    def encode(self, x):
+        h = self.encoder(x)
+        h = h.view(h.size(0), -1)
+        z = self.bottleneck(h)
+        return z
+
+
+    def LSTM_encoder(self, inputs, hiddens):
+        outputs, hiddens = self.encoder_lstm(inputs, hiddens)
+        return outputs, hiddens
+
+    def attention_net(self, s, encoder_output):
+        # s = [1, batch_size, decoder_hidden_size]
+        # encoder_output = [batch_size, seq_len, encoder_hidden_size]
+
+        batch_size = encoder_output.shape[0]
+        seq_len = encoder_output.shape[1]
+
+        # repeat decoder hidden state seq_length times
+        # s = [seq_len, batch_size, dedcoder_hidden_size]
+        # encoder_output = [batch_size, seq_length, encoder_hidden_size]
+        s = s.repeat(seq_len, 1, 1)
+
+        # energy = [batch_size, seq_len, decoder_hiden_size]
+        energy = torch.tanh(self.attn(torch.cat((s.transpose(0,1), encoder_output), dim=2)))
+
+        # attention = [batch_size, seq_len, 1]
+        attention = self.v(energy)
+
+        return F.softmax(attention, dim=1)
+
+
+    def LSTM_decoder(self, decoder_input, s, encoder_output):
+
+        # decoder_input = [batch_size, 1, output_size = 20]
+        # s = [1, batch_size, decoder_hidden_size]
+        # encoder_output = [batch_size, seq_length = 1, encoder_hidden_size]
+
+        # a = [batch_size, 1, seq_len]
+
+        a = self.attention_net(s, encoder_output).transpose(1,2)
+
+
+        # c = [batch_size, 1, encoder_hidden_size]
+        c = torch.bmm(a, encoder_output)
+        # decoder_input = [batch_size, selen = 1, encoder_hidden_size * 2]
+
+
+        decoder_input = torch.cat((decoder_input, c), dim=2)
+        # decoder_output = [batch_size, seq_len = 1, decoder_hidden_size]
+        # decoder_hidden = [n_layers * num_directions = 1, batch_size, decoder_hidden_size]
+
+        #decoder_hidden = [s, c.transpose(0,1)] #in LSTM
+        decoder_hidden = s  # in GRU
+
+        decoder_output, decoder_hidden = self.decoder_gru(decoder_input, decoder_hidden)
+        # encoder_output = [batch_size, 1, encoder_hidden_size]
+        # dec_output = [batch_size, 1, decoder_hidden_size]
+        # c = [batch_size, 1, encoder_hidden_size]
+
+        # outputs = [batch_size, 1, encoder_hidden_size * 2 + decoder_hidden_size]
+        outputs = torch.cat((decoder_output, c, encoder_output), dim=2)
+        # outputs = [batch_size, 1, output_size = 20]
+
+        outputs = F.relu(self.decoder_fc_1(outputs))
+        outputs = torch.tanh(self.decoder_fc_2(outputs))
+
+        return outputs, decoder_hidden
+
+    def initHiddenEncoder(self, n_batch):
+        return  torch.zeros(1, n_batch  ,self.encoder_hidden_size)
+
+
+    def initHiddenDecoder(self, n_batch):
+        return  torch.zeros(1, n_batch  ,self.decoder_hidden_size)
+
+
+    def forward(self, image_s, pr_s, use_n_im, predict_n_pr, encoder_hidden, decoder_hidden):
+
+        features = [self.encode( image_s[i] ) for i in range(use_n_im)]
+
+        PR  = [pr_s[i] for i in range(use_n_im)]
+
+        lstm_input_features = [ torch.cat((features[i], PR[i]), 1).view(image_s[0].size(0), 1, -1) for i in range(use_n_im)]
+        lstm_input_features = torch.cat(lstm_input_features, 2).view(image_s[0].size(0), 1, -1)
+
+        encoder_output, encoder_hidden = self.LSTM_encoder(lstm_input_features, encoder_hidden)
+
+        s = encoder_hidden[0][-1, :, :].unsqueeze(0)
+
+        #decoder_input = encoder_output[:,-1,:].unsqueeze(1)
+        decoder_input = torch.tanh(self.decoder_fc_0(lstm_input_features[:, -1, :].unsqueeze(1)))
+
+
+        decoder_output, decoder_hidden = self.LSTM_decoder(decoder_input, s, encoder_output)  # [batch_size, 1, output_size]
+
+        decoder_output = decoder_output.view(image_s[0].size(0), predict_n_pr, -1)
+
+        return decoder_output, encoder_hidden, decoder_hidden
+
+
+class CNN_LSTM_encoder_attention_decoder_images_PR_many (nn.Module):
+    def __init__(self, cuda = True, h_dim=2688, z_dim=1024, encoder_input_size = 4096, encoder_hidden_size = 300,  decoder_input_size = 300, decoder_hidden_size = 150, output_size = 20):
+        super(CNN_LSTM_encoder_attention_decoder_images_PR_many, self).__init__()
+        self.cuda_p = cuda
+        self.encoder_hidden_size = encoder_hidden_size
+        self.decoder_hidden_size = decoder_hidden_size
+
+        self.encoder = nn.Sequential(
+            nn.Conv2d(3, 8, kernel_size=5, stride=1, padding=2),
+            # nn.BatchNorm2d(8),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size= 3, stride=2, padding=1),
+            nn.Conv2d(8, 16, kernel_size=3, stride=1, padding=1),
+            # nn.BatchNorm2d(16),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding = 1),
+            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1, bias=False),
+            # nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding = 1),
+        )
+
+        self.mu = nn.Linear(int(h_dim), z_dim)
+        self.std = nn.Linear(int(h_dim), z_dim)
+
+        self.encoder_lstm = nn.LSTM(encoder_input_size, encoder_hidden_size, batch_first=True)
+
+        self.attn = nn.Linear(encoder_hidden_size + decoder_hidden_size, decoder_hidden_size, bias=False)
+        self.v = nn.Linear(decoder_hidden_size, 1, bias=False)
+
+        self.decoder_lstm = nn.LSTM(decoder_input_size, decoder_hidden_size, batch_first=True)
+
+        self.decoder_fc_00 = nn.Linear(encoder_input_size, decoder_hidden_size)  # for the decoder_input #10260 calculated
+        self.decoder_fc_0 = nn.Linear(output_size, decoder_hidden_size)  # for the decoder_input #10260 calculated
+        self.decoder_fc_1 = nn.Linear(decoder_hidden_size + encoder_hidden_size, int(decoder_hidden_size / 2))
+        self.decoder_fc_2 = nn.Linear(int(decoder_hidden_size / 2), output_size)
+
+
+    def reparameterize(self, mu, logvar):
+        std = logvar.mul(0.5).exp_()
+        esp = torch.randn(*mu.size())
+        if self.cuda_p:
+            esp = esp.cuda()
+        z = mu + std * esp
+        return z
+
+
+    def bottleneck(self, h):
+        mu  = self.mu(h)
+        logvar = F.relu(self.std(h))
+        z = self.reparameterize(mu, logvar)
+        return z
+
+
+    def encode(self, x):
+        h = self.encoder(x)
+        h = h.view(h.size(0), -1)
+        z = self.bottleneck(h)
+        return z
+
+
+    def LSTM_encoder(self, inputs, hiddens):
+        outputs, hiddens = self.encoder_lstm(inputs, hiddens)
+        return outputs, hiddens
+
+    def attention_net(self, s, encoder_output):
+        # s = [1, batch_size, decoder_hidden_size]
+        # encoder_output = [batch_size, seq_len, encoder_hidden_size]
+
+        batch_size = encoder_output.shape[0]
+        seq_len = encoder_output.shape[1]
+
+        # repeat decoder hidden state seq_length times
+        # s = [seq_len, batch_size, dedcoder_hidden_size]
+        # encoder_output = [batch_size, seq_length, encoder_hidden_size]
+
+        s = s[0].repeat(seq_len, 1, 1) #in LSTM
+        #s = s.repeat(seq_len, 1, 1)  # in GRU
+
+        # energy = [batch_size, seq_len, decoder_hiden_size]
+        energy = torch.tanh(self.attn(torch.cat((s.transpose(0, 1), encoder_output), dim=2)))
+
+        # attention = [batch_size, seq_len, 1]
+        attention = self.v(energy)
+
+        return F.softmax(attention, dim=1)
+
+    def LSTM_decoder(self, decoder_input, s, encoder_output):
+        # decoder_input = [batch_size, 1, output_size = 20]
+        # s = [1, batch_size, decoder_hidden_size]
+        # encoder_output = [batch_size, seq_length = 1, encoder_hidden_size]
+
+        # a = [batch_size, 1, seq_len]
+        a = self.attention_net(s, encoder_output).transpose(1, 2)
+
+        # c = [batch_size, 1, encoder_hidden_size]
+        c = torch.bmm(a, encoder_output)
+
+        # decoder_input = [batch_size, selen = 1, encoder_hidden_size * 2]
+
+        decoder_input = torch.cat((decoder_input, c), dim=2)
+
+        # decoder_output = [batch_size, seq_len = 1, decoder_hidden_size]
+        # decoder_hidden = [n_layers * num_directions = 1, batch_size, decoder_hidden_size]
+
+        decoder_hidden = s
+
+        decoder_output, decoder_hidden = self.decoder_lstm(decoder_input, decoder_hidden)
+
+        # encoder_output = [batch_size, 1, encoder_hidden_size]
+        # dec_output = [batch_size, 1, decoder_hidden_size]
+        # c = [batch_size, 1, encoder_hidden_size]
+
+        # outputs = [batch_size, 1, encoder_hidden_size * 2 + decoder_hidden_size]
+        outputs = torch.cat((decoder_output, c), dim=2)
+
+
+
+        # outputs = [batch_size, 1, output_size = 20]
+        outputs = F.relu(self.decoder_fc_1(outputs))
+
+        outputs = torch.tanh(self.decoder_fc_2(outputs))
+
+        return outputs, decoder_hidden
+
+
+    def initHiddenEncoder(self, n_batch):
+        return  torch.zeros(1, n_batch  ,self.encoder_hidden_size)
+
+
+    def initHiddenDecoder(self, n_batch):
+        return  torch.zeros(1, n_batch  ,self.decoder_hidden_size)
+
+
+    def forward(self, image_s, pr_s, use_n_im, predict_n_pr, encoder_hidden, decoder_hidden):
+
+        features = [self.encode( image_s[i] ) for i in range(use_n_im)]
+        #print(len(features))
+        #print(len(features[0][0]))
+        PR  = [pr_s[i] for i in range(use_n_im)]
+
+        lstm_input_features = [ torch.cat((features[i], PR[i]), 1).view(image_s[0].size(0), 1, -1) for i in range(use_n_im)]
+        lstm_input_features = torch.cat(lstm_input_features, 2).view(image_s[0].size(0), 1, -1)
+
+
+        #print(lstm_input_features.shape)
+
+        #print(lstm_input_features.shape)
+
+        encoder_output, encoder_hidden = self.LSTM_encoder(lstm_input_features,  encoder_hidden)
+
+        if self.cuda_p:
+            output = torch.zeros(pr_s[0].size(0), 1, 2).cuda()
+        else:
+            output = torch.zeros(pr_s[0].size(0), 1, 2)
+
+        decoder_input = torch.tanh(self.decoder_fc_00(lstm_input_features[:, -1, :].unsqueeze(1)))
+
+        #s = encoder_hidden[-1, :, :].unsqueeze(0) # for GRU
+        s = encoder_hidden #for LSTM
+        for t in range(0, predict_n_pr):
+            # decoder_output = [batch_size, 1, output_size = 2]
+
+            decoder_output, s = self.LSTM_decoder(decoder_input, s, encoder_output)
+
+            output = torch.cat([output, decoder_output], 1)
+
+            top1 = decoder_output.argmax(1).float().unsqueeze(1)
+
+            decoder_input = torch.tanh(self.decoder_fc_0(top1))
+
+
+        # output = [batchize, predict_n_pr +1 , output_size = 2]
+        output = output[:, 1:, :]
+        decoder_hidden = s
+        # output = [batch_size, predict_n_pr, output_size = 2]
+        return output, encoder_hidden, decoder_hidden
+
+
+class CNN_LSTM_encoder_GRU_attention_decoder_images_PR_many (nn.Module):
+    def __init__(self, cuda = True, h_dim=2688, z_dim=1024, encoder_input_size = 4096, encoder_hidden_size = 300,  decoder_input_size = 300, decoder_hidden_size = 150, output_size = 20):
+        super(CNN_LSTM_encoder_GRU_attention_decoder_images_PR_many, self).__init__()
+        self.cuda_p = cuda
+        self.encoder_hidden_size = encoder_hidden_size
+        self.decoder_hidden_size = decoder_hidden_size
+
+        self.encoder = nn.Sequential(
+            nn.Conv2d(3, 8, kernel_size=5, stride=1, padding=2),
+            # nn.BatchNorm2d(8),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size= 3, stride=2, padding=1),
+            nn.Conv2d(8, 16, kernel_size=3, stride=1, padding=1),
+            # nn.BatchNorm2d(16),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding = 1),
+            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1, bias=False),
+            # nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding = 1),
+        )
+
+        self.mu = nn.Linear(int(h_dim), z_dim)
+        self.std = nn.Linear(int(h_dim), z_dim)
+
+        self.encoder_lstm = nn.LSTM(encoder_input_size, encoder_hidden_size, batch_first=True)
+
+        self.attn = nn.Linear(encoder_hidden_size + decoder_hidden_size, decoder_hidden_size, bias=False)
+        self.v = nn.Linear(decoder_hidden_size, 1, bias=False)
+
+        self.decoder_gru = nn.GRU(decoder_input_size, decoder_hidden_size, batch_first=True)
+
+        self.decoder_fc_00 = nn.Linear(encoder_input_size, decoder_hidden_size)  # for the decoder_input #10260 calculated
+        self.decoder_fc_0 = nn.Linear(output_size, decoder_hidden_size)  # for the decoder_input #10260 calculated
+        self.decoder_fc_1 = nn.Linear(decoder_hidden_size + encoder_hidden_size, int(decoder_hidden_size / 2))
+        self.decoder_fc_2 = nn.Linear(int(decoder_hidden_size / 2), output_size)
+
+
+    def reparameterize(self, mu, logvar):
+        std = logvar.mul(0.5).exp_()
+        esp = torch.randn(*mu.size())
+        if self.cuda_p:
+            esp = esp.cuda()
+        z = mu + std * esp
+        return z
+
+
+    def bottleneck(self, h):
+        mu  = self.mu(h)
+        logvar = F.relu(self.std(h))
+        z = self.reparameterize(mu, logvar)
+        return z
+
+
+    def encode(self, x):
+        h = self.encoder(x)
+        h = h.view(h.size(0), -1)
+        z = self.bottleneck(h)
+        return z
+
+
+    def LSTM_encoder(self, inputs, hiddens):
+        outputs, hiddens = self.encoder_lstm(inputs, hiddens)
+        return outputs, hiddens
+
+    def attention_net(self, s, encoder_output):
+        # s = [1, batch_size, decoder_hidden_size]
+        # encoder_output = [batch_size, seq_len, encoder_hidden_size]
+
+        batch_size = encoder_output.shape[0]
+        seq_len = encoder_output.shape[1]
+
+        # repeat decoder hidden state seq_length times
+        # s = [seq_len, batch_size, dedcoder_hidden_size]
+        # encoder_output = [batch_size, seq_length, encoder_hidden_size]
+
+        s = s[0].repeat(seq_len, 1, 1) #in LSTM
+        #s = s.repeat(seq_len, 1, 1)  # in GRU
+
+        # energy = [batch_size, seq_len, decoder_hiden_size]
+        energy = torch.tanh(self.attn(torch.cat((s.transpose(0, 1), encoder_output), dim=2)))
+
+        # attention = [batch_size, seq_len, 1]
+        attention = self.v(energy)
+
+        return F.softmax(attention, dim=1)
+
+    def GRU_decoder(self, decoder_input, s, encoder_output):
+        # decoder_input = [batch_size, 1, output_size = 20]
+        # s = [1, batch_size, decoder_hidden_size]
+        # encoder_output = [batch_size, seq_length = 1, encoder_hidden_size]
+
+        # a = [batch_size, 1, seq_len]
+        a = self.attention_net(s, encoder_output).transpose(1, 2)
+
+        # c = [batch_size, 1, encoder_hidden_size]
+        c = torch.bmm(a, encoder_output)
+
+        # decoder_input = [batch_size, selen = 1, encoder_hidden_size * 2]
+
+        decoder_input = torch.cat((decoder_input, c), dim=2)
+
+        # decoder_output = [batch_size, seq_len = 1, decoder_hidden_size]
+        # decoder_hidden = [n_layers * num_directions = 1, batch_size, decoder_hidden_size]
+
+        decoder_hidden = s
+
+        decoder_output, decoder_hidden = self.decoder_gru(decoder_input, decoder_hidden)
+
+        # encoder_output = [batch_size, 1, encoder_hidden_size]
+        # dec_output = [batch_size, 1, decoder_hidden_size]
+        # c = [batch_size, 1, encoder_hidden_size]
+
+        # outputs = [batch_size, 1, encoder_hidden_size * 2 + decoder_hidden_size]
+        outputs = torch.cat((decoder_output, c), dim=2)
+
+
+
+        # outputs = [batch_size, 1, output_size = 20]
+        outputs = F.relu(self.decoder_fc_1(outputs))
+
+        outputs = torch.tanh(self.decoder_fc_2(outputs))
+
+        return outputs, decoder_hidden
+
+
+    def initHiddenEncoder(self, n_batch):
+        return  torch.zeros(1, n_batch  ,self.encoder_hidden_size)
+
+
+    def initHiddenDecoder(self, n_batch):
+        return  torch.zeros(1, n_batch  ,self.decoder_hidden_size)
+
+
+    def forward(self, image_s, pr_s, use_n_im, predict_n_pr, encoder_hidden, decoder_hidden):
+
+        features = [self.encode( image_s[i] ) for i in range(use_n_im)]
+        #print(len(features))
+        #print(len(features[0][0]))
+        PR  = [pr_s[i] for i in range(use_n_im)]
+
+        lstm_input_features = [ torch.cat((features[i], PR[i]), 1).view(image_s[0].size(0), 1, -1) for i in range(use_n_im)]
+        lstm_input_features = torch.cat(lstm_input_features, 2).view(image_s[0].size(0), 1, -1)
+
+
+        #print(lstm_input_features.shape)
+
+        #print(lstm_input_features.shape)
+
+        encoder_output, encoder_hidden = self.LSTM_encoder(lstm_input_features,  encoder_hidden)
+
+        if self.cuda_p:
+            output = torch.zeros(pr_s[0].size(0), 1, 2).cuda()
+        else:
+            output = torch.zeros(pr_s[0].size(0), 1, 2)
+
+        decoder_input = torch.tanh(self.decoder_fc_00(lstm_input_features[:, -1, :].unsqueeze(1)))
+
+        #s = encoder_hidden[-1, :, :].unsqueeze(0) # for GRU
+        s = encoder_hidden[0] #for LSTM
+        for t in range(0, predict_n_pr):
+            # decoder_output = [batch_size, 1, output_size = 2]
+
+            decoder_output, s = self.GRU_decoder(decoder_input, s, encoder_output)
+
+            output = torch.cat([output, decoder_output], 1)
+
+            top1 = decoder_output.argmax(1).float().unsqueeze(1)
+
+            decoder_input = torch.tanh(self.decoder_fc_0(top1))
+
+
+        # output = [batchize, predict_n_pr +1 , output_size = 2]
+        output = output[:, 1:, :]
+        decoder_hidden = s
+        # output = [batch_size, predict_n_pr, output_size = 2]
+        return output, encoder_hidden, decoder_hidden
+
+class CNN_GRU_encoder_decoder_images_PR (nn.Module):
+    def __init__(self, cuda = True, h_dim=2688, z_dim=1024, encoder_input_size = 4096, encoder_hidden_size = 300,  decoder_input_size = 300, decoder_hidden_size = 150, output_size = 20):
+        super(CNN_GRU_encoder_decoder_images_PR, self).__init__()
+        self.cuda_p = cuda
+        self.encoder_hidden_size = encoder_hidden_size
+        self.decoder_hidden_size = decoder_hidden_size
+
+        self.encoder = nn.Sequential(
+            nn.Conv2d(3, 8, kernel_size=5, stride=1, padding=2),
+            # nn.BatchNorm2d(8),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size= 3, stride=2, padding=1),
+            nn.Conv2d(8, 16, kernel_size=3, stride=1, padding=1),
+            # nn.BatchNorm2d(16),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding = 1),
+            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1, bias=False),
+            # nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding = 1),
+        )
+
+        self.mu = nn.Linear(int(h_dim), z_dim)
+        self.std = nn.Linear(int(h_dim), z_dim)
+
+        self.encoder_gru = nn.GRU(encoder_input_size, encoder_hidden_size, batch_first=True)
+
+        self.decoder_gru = nn.GRU(decoder_input_size, decoder_hidden_size, batch_first=True)
+
+        self.decoder_fc_1 = nn.Linear(decoder_hidden_size, int(decoder_hidden_size/2))
+        self.decoder_fc_2 = nn.Linear(int(decoder_hidden_size/2), output_size)
+
+
+    def reparameterize(self, mu, logvar):
+        std = logvar.mul(0.5).exp_()
+        esp = torch.randn(*mu.size())
+        if self.cuda_p:
+            esp = esp.cuda()
+        z = mu + std * esp
+        return z
+
+
+    def bottleneck(self, h):
+        mu  = self.mu(h)
+        logvar = F.relu(self.std(h))
+        z = self.reparameterize(mu, logvar)
+        return z
+
+
+    def encode(self, x):
+        h = self.encoder(x)
+        h = h.view(h.size(0), -1)
+        z = self.bottleneck(h)
+        return z
+
+
+    def GRU_encoder(self, inputs, hiddens):
+        outputs, hiddens = self.encoder_gru(inputs, hiddens)
+        return outputs, hiddens
+
+
+    def GRU_decoder(self, inputs, hiddens):
+        outputs = F.relu(inputs)
+        outputs, hiddens = self.decoder_gru(outputs, hiddens)
+        outputs = F.relu(self.decoder_fc_1(outputs))
+        outputs = torch.tanh(self.decoder_fc_2(outputs))
+        return outputs, hiddens
+
+
+    def initHiddenEncoder(self, n_batch):
+        return  torch.zeros(1, n_batch  ,self.encoder_hidden_size)
+
+
+    def initHiddenDecoder(self, n_batch):
+        return  torch.zeros(1, n_batch  ,self.decoder_hidden_size)
+
+
+    def forward(self, image_s, pr_s, use_n_im, predict_n_pr, encoder_hidden, decoder_hidden):
+
+        features = [self.encode( image_s[i] ) for i in range(use_n_im)]
+        PR  = [pr_s[i] for i in range(use_n_im)]
+
+        gru_input_features = [ torch.cat((features[i], PR[i]), 1).view(image_s[0].size(0), 1, -1) for i in range(use_n_im)]
+        gru_input_features = torch.cat(gru_input_features, 2).view(image_s[0].size(0), 1, -1)
+
+        encoder_output, encoder_hidden = self.GRU_encoder(gru_input_features,  encoder_hidden)
+        decoder_output, decoder_hidden = self.GRU_decoder(encoder_output, decoder_hidden)
+
+        decoder_output = decoder_output.view(image_s[0].size(0), predict_n_pr, -1)
+
+        return decoder_output, encoder_hidden, decoder_hidden
+
+
+class CNN_GRU_encoder_attention_decoder_images_PR (nn.Module):
+    def __init__(self, cuda = True, h_dim=2688, z_dim=1024, encoder_input_size = 4096, encoder_hidden_size = 300,  decoder_input_size = 600, decoder_hidden_size = 150, output_size = 20):
+        super(CNN_GRU_encoder_attention_decoder_images_PR, self).__init__()
+        self.cuda_p = cuda
+        self.encoder_hidden_size = encoder_hidden_size
+        self.decoder_hidden_size = decoder_hidden_size
+
+        self.encoder = nn.Sequential(
+            nn.Conv2d(3, 8, kernel_size=5, stride=1, padding=2),
+            # nn.BatchNorm2d(8),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size= 3, stride=2, padding=1),
+            nn.Conv2d(8, 16, kernel_size=3, stride=1, padding=1),
+            # nn.BatchNorm2d(16),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding = 1),
+            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1, bias=False),
+            # nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding = 1),
+        )
+
+        self.mu = nn.Linear(int(h_dim), z_dim)
+        self.std = nn.Linear(int(h_dim), z_dim)
+
+        self.encoder_gru = nn.GRU(encoder_input_size, encoder_hidden_size, batch_first=True)
+
+        self.attn = nn.Linear(encoder_hidden_size + decoder_hidden_size, decoder_hidden_size, bias=False)
+        self.v = nn.Linear(decoder_hidden_size, 1, bias=False)
+
+        self.decoder_gru = nn.GRU(decoder_input_size, decoder_hidden_size, batch_first=True)
+
+        self.decoder_fc_0 = nn.Linear(encoder_input_size, decoder_hidden_size)  # for the decoder_input
+        self.decoder_fc_1 = nn.Linear(encoder_hidden_size*2 + decoder_hidden_size, int(decoder_hidden_size/2))
+        self.decoder_fc_2 = nn.Linear(int(decoder_hidden_size/2), output_size)
+
+
+    def reparameterize(self, mu, logvar):
+        std = logvar.mul(0.5).exp_()
+        esp = torch.randn(*mu.size())
+        if self.cuda_p:
+            esp = esp.cuda()
+        z = mu + std * esp
+        return z
+
+
+    def bottleneck(self, h):
+        mu  = self.mu(h)
+        logvar = F.relu(self.std(h))
+        z = self.reparameterize(mu, logvar)
+        return z
+
+
+    def encode(self, x):
+        h = self.encoder(x)
+        h = h.view(h.size(0), -1)
+        z = self.bottleneck(h)
+        return z
+
+
+    def GRU_encoder(self, inputs, hiddens):
+        outputs, hiddens = self.encoder_gru(inputs, hiddens)
+        return outputs, hiddens
+
+    def attention_net(self, s, encoder_output):
+        # s = [1, batch_size, decoder_hidden_size]
+        # encoder_output = [batch_size, seq_len, encoder_hidden_size]
+
+        batch_size = encoder_output.shape[0]
+        seq_len = encoder_output.shape[1]
+
+        # repeat decoder hidden state seq_length times
+        # s = [seq_len, batch_size, dedcoder_hidden_size]
+        # encoder_output = [batch_size, seq_length, encoder_hidden_size]
+        s = s.repeat(seq_len, 1, 1)
+
+        # energy = [batch_size, seq_len, decoder_hiden_size]
+        energy = torch.tanh(self.attn(torch.cat((s.transpose(0, 1), encoder_output), dim=2)))
+
+        # attention = [batch_size, seq_len, 1]
+        attention = self.v(energy)
+
+        return F.softmax(attention, dim=1)
+
+    def GRU_decoder(self, decoder_input, s, encoder_output):
+        # decoder_input = [batch_size, 1, output_size = 20]
+        # s = [1, batch_size, decoder_hidden_size]
+        # encoder_output = [batch_size, seq_length = 1, encoder_hidden_size]
+
+        # a = [batch_size, 1, seq_len]
+        a = self.attention_net(s, encoder_output).transpose(1, 2)
+
+        # c = [batch_size, 1, encoder_hidden_size]
+        c = torch.bmm(a, encoder_output)
+
+        # decoder_input = [batch_size, selen = 1, encoder_hidden_size * 2]
+
+        decoder_input = torch.cat((decoder_input, c), dim=2)
+
+        # decoder_output = [batch_size, seq_len = 1, decoder_hidden_size]
+        # decoder_hidden = [n_layers * num_directions = 1, batch_size, decoder_hidden_size]
+
+        # decoder_hidden = [s, c.transpose(0,1)] in LSTM
+
+        decoder_hidden = s # in GRU
+
+
+        decoder_output, decoder_hidden = self.decoder_gru(decoder_input, decoder_hidden)
+
+        # encoder_output = [batch_size, 1, encoder_hidden_size]
+        # dec_output = [batch_size, 1, decoder_hidden_size]
+        # c = [batch_size, 1, encoder_hidden_size]
+
+        # outputs = [batch_size, 1, encoder_hidden_size * 2 + decoder_hidden_size]
+        outputs = torch.cat((decoder_output, c, encoder_output), dim=2)
+
+        # outputs = [batch_size, 1, output_size = 20]
+        outputs = F.relu(self.decoder_fc_1(outputs))
+        outputs = torch.tanh(self.decoder_fc_2(outputs))
+
+        return outputs, decoder_hidden
+
+
+    def initHiddenEncoder(self, n_batch):
+        return  torch.zeros(1, n_batch  ,self.encoder_hidden_size)
+
+
+    def initHiddenDecoder(self, n_batch):
+        return  torch.zeros(1, n_batch  ,self.decoder_hidden_size)
+
+
+    def forward(self, image_s, pr_s, use_n_im, predict_n_pr, encoder_hidden, decoder_hidden):
+
+        features = [self.encode( image_s[i] ) for i in range(use_n_im)]
+        PR  = [pr_s[i] for i in range(use_n_im)]
+
+        gru_input_features = [ torch.cat((features[i], PR[i]), 1).view(image_s[0].size(0), 1, -1) for i in range(use_n_im)]
+        gru_input_features = torch.cat(gru_input_features, 2).view(image_s[0].size(0), 1, -1)
+
+        encoder_output, encoder_hidden = self.GRU_encoder(gru_input_features,  encoder_hidden)
+        #s = encoder_hidden[0][-1,:,:].unsqueeze(0) # in LSTM
+        s = encoder_hidden[-1,:,:].unsqueeze(0)
+
+        decoder_input = torch.tanh(self.decoder_fc_0(gru_input_features[:, -1, :].unsqueeze(1)))
+
+        decoder_output, decoder_hidden = self.GRU_decoder(decoder_input, s, encoder_output) #[batch_size, 1, output_size]
+
+        decoder_output = decoder_output.view(image_s[0].size(0), predict_n_pr, -1) #[batch_size,predict_n_pr, 2]
+
+        return decoder_output, encoder_hidden, decoder_hidden
+
+
+
+# the codes below are for transformer:
+#
+# ntokens = len(TEXT.vocab.stoi) # the size of vocabulary
+# emsize = 200 # embedding dimension
+# nhid = 200 # the dimension of the feedforward network model in nn.TransformerEncoder
+# nlayers = 2 # the number of nn.TransformerEncoderLayer in nn.TransformerEncoder
+# nhead = 2 # the number of heads in the multiheadattention models
+# dropout = 0.2 # the dropout value
+# model = TransformerModel(ntokens, emsize, nhead, nhid, nlayers, dropout).to(device)
+
+class PositionalEncoding(nn.Module):
+
+    def __init__(self, d_model, dropout=0.1, max_len=50):
+        super(PositionalEncoding, self).__init__()
+        self.dropout = nn.Dropout(p=dropout)
+
+        pe = torch.zeros(max_len, d_model)
+        position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
+        pe[:, 0::2] = torch.sin(position * div_term)
+        pe[:, 1::2] = torch.cos(position * div_term)
+        pe = pe.unsqueeze(0).transpose(0, 1)
+        self.register_buffer('pe', pe)
+
+    def forward(self, x):
+        x = x + self.pe[:x.size(0), :]
+        return self.dropout(x)
+
+
+class TransformerModel_PR(nn.Module):
+    def __init__(self, cuda = True, encoder_input_size = 10, encoder_hidden_size = 300, decoder_hidden_size = 300,  output_size = 20):
+        super(TransformerModel_PR, self).__init__()
+        self.cuda_p = cuda
+        #transformer parameters
+        self.ntoken = 2 #pitch_and_roll
+        self.ninp = self.ntoken #embeded_dim
+        self.nhead = 1
+        self.nlayers = 1
+        self.dropout = 0.4
+        self.src_mask = None
+        self.tgt_masak = None
+        self.nhid = encoder_hidden_size
+
+        self.encoder_hidden_size = encoder_hidden_size
+        self.decoder_hidden_size = decoder_hidden_size
+
+        self.pos_encoder = PositionalEncoding(self.ninp, self.dropout)
+        encoder_layers = nn.TransformerEncoderLayer(self.ninp, self.nhead, self.nhid, self.dropout)
+        self.transformer_encoder = nn.TransformerEncoder(encoder_layers, self.nlayers)
+
+        decoder_layers = nn.TransformerDecoderLayer(self.ninp, self.nhead, self.nhid, self.dropout)
+        self.transformer_decoder = nn.TransformerDecoder(decoder_layers, self.nlayers)
+
+    #the two init functions have no sense but to maintain the structure
+    def initHiddenEncoder(self, n_batch):
+        return  torch.zeros(1, n_batch  ,self.encoder_hidden_size)
+
+
+    def initHiddenDecoder(self, n_batch):
+        return  torch.zeros(1, n_batch  ,self.decoder_hidden_size)
+
+    def _generate_square_subsequent_mask(self, sz):
+        mask = (torch.triu(torch.ones(sz, sz)) == 1).transpose(0, 1)
+        mask = mask.float().masked_fill(mask == 0, float('-inf')).masked_fill(mask == 1, float(0.0))
+        return mask
+
+
+    def forward(self, image_s, pr_s, use_n_im, predict_n_pr):
+
+
+        PR_src  = [pr_s[i] for i in range(int(use_n_im))]
+        src = torch.cat(PR_src, 1).view(pr_s[0].size(0), int(use_n_im), -1)
+
+
+  #      PR_tgt  = [pr_s[i] for i in range(int(use_n_im /2)+1, use_n_im)]
+  #      tgt = torch.cat(PR_tgt, 1).view(pr_s[0].size(0), use_n_im - int(use_n_im/2), -1)
+
+
+        src = self.pos_encoder(src * math.sqrt(self.ninp))
+  #      tgt = self.pos_encoder(tgt * math.sqrt(self.ninp))
+
+        if self.src_mask is None or self.src_mask.size(0) != len(src):
+            device = src.device
+            mask = self._generate_square_subsequent_mask(len(src)).to(device)
+            self.src_mask = mask
+
+        # if self.tgt_mask is None or self.tgt_mask.size(0) != len(tgt):
+        #     device = tgt.device
+        #     mask = self._generate_square_subsequent_mask(len(tgt)).to(device)
+        #     self.src_mask = mask
+
+        src = F.relu(src)
+        tgt = src #F.relu(tgt)
+
+        memory = self.transformer_encoder(src, self.src_mask)
+
+        decoder_output = self.transformer_decoder(tgt, memory)
+
+        return decoder_output
+

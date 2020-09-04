@@ -262,17 +262,31 @@ def main(args, num_epochs = 30):
         model = CNN_stack_FC(cuda = cuda, num_channel = use_n_channels,  cnn_fc_size = 1024, num_output=predict_n_pr*2)
     elif model_type == "CNN_LSTM_encoder_decoder_images_PR":
         model = CNN_LSTM_encoder_decoder_images_PR(cuda = cuda, encoder_input_size = use_n_im*1026, encoder_hidden_size = encoder_latent_vector, decoder_input_size = encoder_latent_vector, decoder_hidden_size = decoder_latent_vector,  output_size = 2*predict_n_pr)
+        #use pretrained model
+        use_pretrainted(model, AutoEncoder())
     elif model_type == "LSTM_encoder_decoder_PR":
         model = LSTM_encoder_decoder_PR(cuda = cuda, encoder_input_size = use_n_im*2, encoder_hidden_size = 300, decoder_hidden_size = 300,  output_size = 2*predict_n_pr)
+    elif model_type == "GRU_encoder_decoder_PR":
+        model = GRU_encoder_decoder_PR(cuda = cuda, encoder_input_size = use_n_im*2, encoder_hidden_size = 300, decoder_hidden_size = 300,  output_size = predict_n_pr*2)
+    elif model_type == "LSTM_encoder_attention_decoder_PR":
+        model = LSTM_encoder_attention_decoder_PR(cuda = cuda, encoder_input_size = use_n_im*2, encoder_hidden_size = encoder_latent_vector, decoder_hidden_size = decoder_latent_vector,  output_size = 2*predict_n_pr, batch_size = batchsize)
     elif model_type == "CNN_LSTM_encoder_decoder_images":
         model = CNN_LSTM_encoder_decoder_images(cuda = cuda, encoder_input_size = use_n_im*1024, encoder_hidden_size = encoder_latent_vector, decoder_hidden_size = encoder_latent_vector,  output_size = 2*predict_n_pr)
+        #use pretrained model
+        use_pretrainted(model, AutoEncoder())
     elif model_type == 'CNN_LSTM_decoder_images_PR':
         model = CNN_LSTM_decoder_images_PR(cuda = cuda, decoder_input_size = use_n_im*1026, decoder_hidden_size = 1000, output_size = 2*predict_n_pr)
+        #use pretrained model
+        CNN_part_tmp = AutoEncoder()
+        use_pretrainted(model, AutoEncoder())
     elif model_type == "CNN_LSTM_image_encoder_PR_encoder_decoder":
         model = CNN_LSTM_image_encoder_PR_encoder_decoder(cuda = cuda, im_encoder_input_size = use_n_im*1024, pr_encoder_input_size = use_n_im*2 , im_encoder_hidden_size = 600, pr_encoder_hidden_size = 300, decoder_hidden_size = 900,  output_size = predict_n_pr*2)
+        #use pretrained model
+        use_pretrainted(model, AutoEncoder())
         use_2_encoders = True
     else:
         raise ValueError("Model type not supported")
+
 
     # Load model's weights
 

@@ -22,7 +22,7 @@ from Pre.utils import loadLabels, gen_dict_for_json, write_result, use_pretraint
 from Pre.utils import JsonDataset_universal as JsonDataset
 
 from Pre.earlyStopping import EarlyStopping
-from Pre.models import CNN_stack_FC_first, CNN_stack_FC, CNN_stack_PR_FC, CNN_LSTM_encoder_decoder_images_PR, AutoEncoder, LSTM_encoder_decoder_PR, CNN_LSTM_encoder_decoder_images, CNN_LSTM_decoder_images_PR, CNN_PR_FC, CNN_LSTM_image_encoder_PR_encoder_decoder
+from Pre.models import CNN_stack_FC_first, CNN_stack_FC, CNN_stack_PR_FC, CNN_LSTM_encoder_decoder_images_PR, AutoEncoder, LSTM_encoder_decoder_PR, CNN_LSTM_encoder_decoder_images, CNN_LSTM_decoder_images_PR, CNN_PR_FC, CNN_LSTM_image_encoder_PR_encoder_decoder, CNN_GRU_encoder_decoder_images_PR, GRU_encoder_decoder_PR_many, LSTM_encoder_decoder_PR_many, GRU_encoder_attention_decoder_PR, GRU_encoder_attention_decoder_PR_many, LSTM_encoder_attention_decoder_PR_many, CNN_LSTM_encoder_attention_decoder_images_PR_many, TransformerModel_PR, GRU_encoder_decoder_PR, LSTM_encoder_attention_decoder_PR, CNN_LSTM_encoder_attention_decoder_images_PR, CNN_GRU_encoder_attention_decoder_images_PR, LSTM_encoder_GRU_decoder_PR, LSTM_encoder_GRU_decoder_PR_many, LSTM_encoder_GRU_attention_decoder_PR, CNN_LSTM_encoder_GRU_attention_decoder_images_PR, CNN_LSTM_encoder_GRU_decoder_images_PR, CNN_LSTM_encoder_GRU_attention_decoder_images_PR_many, CNN_LSTM_encoder_decoder_images_PR_many
 
 from Pre.get_hyperparameters_configuration import get_params
 from Pre.hyperband import Hyperband
@@ -51,30 +51,48 @@ def train(cuda, change_fps, inputs, targets, model, optimizer, criterion, predic
 
     if cuda:
         # Preparation of hidden vectors for LSTM encoders and decoders
-        if not use_2_encoders:
-            encoder_hidden = (model.initHiddenEncoder(inputs.size(0)).cuda(),
-                        model.initHiddenEncoder(inputs.size(0)).cuda())
+        if not use_2_encoders :
+            if 'LSTM' in str(model) and not 'GRU' in str(model):
+                encoder_hidden = (model.initHiddenEncoder(inputs.size(0)).cuda(),
+                            model.initHiddenEncoder(inputs.size(0)).cuda())
+                decoder_hidden = (model.initHiddenDecoder(targets.size(0)).cuda(),
+                                  model.initHiddenDecoder(targets.size(0)).cuda())
+            elif 'GRU' in str(model) and 'LSTM' in str(model):
+                encoder_hidden = (model.initHiddenEncoder(inputs.size(0)).cuda(),
+                            model.initHiddenEncoder(inputs.size(0)).cuda())
+                decoder_hidden = model.initHiddenDecoder(targets.size(0)).cuda()
+            elif 'GRU' in str(model) and not 'LSTM' in str(model):
+                encoder_hidden = model.initHiddenEncoder(inputs.size(0)).cuda()
+                decoder_hidden = model.initHiddenDecoder(targets.size(0)).cuda()
         else:
-            im_encoder_hidden = (model.initHiddenEncoderIm(inputs.size(0)).cuda(),
-                        model.initHiddenEncoderIm(inputs.size(0)).cuda())
-            pr_encoder_hidden = (model.initHiddenEncoderPR(inputs.size(0)).cuda(),
-                        model.initHiddenEncoderPR(inputs.size(0)).cuda())
+            if 'LSTM' in str(model) and not not 'GRU' in str(model):
+                im_encoder_hidden = (model.initHiddenEncoderIm(inputs.size(0)).cuda(),
+                            model.initHiddenEncoderIm(inputs.size(0)).cuda())
+                pr_encoder_hidden = (model.initHiddenEncoderPR(inputs.size(0)).cuda(),
+                            model.initHiddenEncoderPR(inputs.size(0)).cuda())
 
-        decoder_hidden = (model.initHiddenDecoder(targets.size(0)).cuda(),
-                        model.initHiddenDecoder(targets.size(0)).cuda())
+
     else:
         # Preparation of hidden vectors for LSTM encoders and decoders
-        if not use_2_encoders:
-            encoder_hidden = (model.initHiddenEncoder(inputs.size(0)),
-                        model.initHiddenEncoder(inputs.size(0)))
+        if not use_2_encoders :
+            if 'LSTM' in str(model) and not 'GRU' in str(model):
+                encoder_hidden = (model.initHiddenEncoder(inputs.size(0)),
+                            model.initHiddenEncoder(inputs.size(0)))
+                decoder_hidden = (model.initHiddenDecoder(targets.size(0)),
+                                  model.initHiddenDecoder(targets.size(0)))
+            elif 'GRU' in str(model) and 'LSTM' in str(model):  #LSTM as encoder and GRU as decoder
+                encoder_hidden = (model.initHiddenEncoder(inputs.size(0)),
+                            model.initHiddenEncoder(inputs.size(0)))
+                decoder_hidden = model.initHiddenDecoder(targets.size(0))
+            elif 'GRU' in str(model) and not 'LSTM' in str(model):
+                encoder_hidden = model.initHiddenEncoder(inputs.size(0))
+                decoder_hidden = model.initHiddenDecoder(targets.size(0))
         else:
-            im_encoder_hidden = (model.initHiddenEncoderIm(inputs.size(0)),
-                        model.initHiddenEncoderIm(inputs.size(0)))
-            pr_encoder_hidden = (model.initHiddenEncoderPR(inputs.size(0)),
-                        model.initHiddenEncoderPR(inputs.size(0)))
-
-        decoder_hidden = (model.initHiddenDecoder(targets.size(0)),
-                        model.initHiddenDecoder(targets.size(0)))
+            if 'LSTM' in str(model) and not not 'GRU' in str(model):
+                im_encoder_hidden = (model.initHiddenEncoderIm(inputs.size(0)),
+                            model.initHiddenEncoderIm(inputs.size(0)))
+                pr_encoder_hidden = (model.initHiddenEncoderPR(inputs.size(0)),
+                            model.initHiddenEncoderPR(inputs.size(0)))
 
     # How many steps will the algorithm take through the sequence
     tmp = LEN_SEQ
@@ -84,25 +102,34 @@ def train(cuda, change_fps, inputs, targets, model, optimizer, criterion, predic
 
     optimizer.zero_grad()
     #loss = 0.0
-    loss = th.zeros(1,requires_grad=True)
-
-    #print(tmp, use_n_im, target_length, predict_n_pr, use_n_im)
-
-    for im in range(use_n_im-1, target_length+use_n_im):
+    if not cuda:
+        loss = th.zeros(1,requires_grad=True)
+    else:
+        loss = th.zeros(1, requires_grad=True).cuda()
+    #print(tmp, use_n_im, target_length, predict_n_pr)
+    for im in range(use_n_im-1, target_length + use_n_im):
         # Get one input for model
+        # inputs.shape = [batch_size,  3, 54, 96]
         image_s = [inputs[:,im-i,:,:,:] for i in range(use_n_im - 1, -1, -1)]
         pr_s = [targets[:,im-i,:] for i in range(use_n_im - 1, -1, -1)]
 
         # Prediction
-        if not use_2_encoders:
-            prediction, encoder_hidden, decoder_hidden = model(image_s, pr_s, use_n_im, predict_n_pr, encoder_hidden, decoder_hidden)
-        else:
-            prediction, im_encoder_hidden, pr_encoder_hidden, decoder_hidden = model(image_s, pr_s, use_n_im, predict_n_pr, im_encoder_hidden, pr_encoder_hidden, decoder_hidden)
+
+        if 'Transformer' in str(model):
+            prediction = model(image_s, pr_s, use_n_im, predict_n_pr)
+        elif not use_2_encoders:
+            prediction, encoder_hidden, decoder_hidden = model(image_s, pr_s, use_n_im, predict_n_pr, encoder_hidden,
+                                                               decoder_hidden)
+        else: prediction, im_encoder_hidden, pr_encoder_hidden, decoder_hidden = model(image_s, pr_s, use_n_im, predict_n_pr, im_encoder_hidden, pr_encoder_hidden, decoder_hidden)
 
         # calculate loss function
         #loss += criterion(prediction, targets[:,im+1 : im+predict_n_pr+1,:])/predict_n_pr
         # This line causes a pb: a leaf Variable that requires grad has been used in an in-place operation.
-        loss = loss + criterion(prediction, targets[:,im+1 : im+predict_n_pr+1,:])/predict_n_pr
+
+
+        loss = loss + criterion(prediction, targets[:, im + 1: im + predict_n_pr + 1, :]) / predict_n_pr
+
+        #print(targets[:, im + 1: im + predict_n_pr + 1, :].shape) # 24,10,2
         #print(loss)
 
 
@@ -131,30 +158,48 @@ def eval(cuda, change_fps, inputs, targets, model, criterion, predict_n_pr, use_
     """
     if cuda:
         # Preparation of hidden vectors for LSTM encoders and decoders
-        if not use_2_encoders:
-            encoder_hidden = (model.initHiddenEncoder(inputs.size(0)).cuda(),
-                        model.initHiddenEncoder(inputs.size(0)).cuda())
+        if not use_2_encoders :
+            if 'LSTM' in str(model) and not 'GRU' in str(model):
+                encoder_hidden = (model.initHiddenEncoder(inputs.size(0)).cuda(),
+                            model.initHiddenEncoder(inputs.size(0)).cuda())
+                decoder_hidden = (model.initHiddenDecoder(targets.size(0)).cuda(),
+                                  model.initHiddenDecoder(targets.size(0)).cuda())
+            elif 'GRU' in str(model) and 'LSTM' in str(model):
+                encoder_hidden = (model.initHiddenEncoder(inputs.size(0)).cuda(),
+                            model.initHiddenEncoder(inputs.size(0)).cuda())
+                decoder_hidden = model.initHiddenDecoder(targets.size(0)).cuda()
+            elif 'GRU' in str(model) and not 'LSTM' in str(model):
+                encoder_hidden = model.initHiddenEncoder(inputs.size(0)).cuda()
+                decoder_hidden = model.initHiddenDecoder(targets.size(0)).cuda()
         else:
-            im_encoder_hidden = (model.initHiddenEncoderIm(inputs.size(0)).cuda(),
-                        model.initHiddenEncoderIm(inputs.size(0)).cuda())
-            pr_encoder_hidden = (model.initHiddenEncoderPR(inputs.size(0)).cuda(),
-                        model.initHiddenEncoderPR(inputs.size(0)).cuda())
+            if 'LSTM' in str(model) and not not 'GRU' in str(model):
+                im_encoder_hidden = (model.initHiddenEncoderIm(inputs.size(0)).cuda(),
+                            model.initHiddenEncoderIm(inputs.size(0)).cuda())
+                pr_encoder_hidden = (model.initHiddenEncoderPR(inputs.size(0)).cuda(),
+                            model.initHiddenEncoderPR(inputs.size(0)).cuda())
 
-        decoder_hidden = (model.initHiddenDecoder(targets.size(0)).cuda(),
-                        model.initHiddenDecoder(targets.size(0)).cuda())
+
     else:
         # Preparation of hidden vectors for LSTM encoders and decoders
-        if not use_2_encoders:
-            encoder_hidden = (model.initHiddenEncoder(inputs.size(0)),
-                        model.initHiddenEncoder(inputs.size(0)))
+        if not use_2_encoders :
+            if 'LSTM' in str(model) and not 'GRU' in str(model):
+                encoder_hidden = (model.initHiddenEncoder(inputs.size(0)),
+                            model.initHiddenEncoder(inputs.size(0)))
+                decoder_hidden = (model.initHiddenDecoder(targets.size(0)),
+                                  model.initHiddenDecoder(targets.size(0)))
+            elif 'GRU' in str(model) and 'LSTM' in str(model):
+                encoder_hidden = (model.initHiddenEncoder(inputs.size(0)),
+                            model.initHiddenEncoder(inputs.size(0)))
+                decoder_hidden = model.initHiddenDecoder(targets.size(0))
+            elif 'GRU' in str(model) and not 'LSTM' in str(model):
+                encoder_hidden = model.initHiddenEncoder(inputs.size(0))
+                decoder_hidden = model.initHiddenDecoder(targets.size(0))
         else:
-            im_encoder_hidden = (model.initHiddenEncoderIm(inputs.size(0)),
-                        model.initHiddenEncoderIm(inputs.size(0)))
-            pr_encoder_hidden = (model.initHiddenEncoderPR(inputs.size(0)),
-                        model.initHiddenEncoderPR(inputs.size(0)))
-
-        decoder_hidden = (model.initHiddenDecoder(targets.size(0)),
-                        model.initHiddenDecoder(targets.size(0)))
+            if 'LSTM' in str(model) and not not 'GRU' in str(model):
+                im_encoder_hidden = (model.initHiddenEncoderIm(inputs.size(0)),
+                            model.initHiddenEncoderIm(inputs.size(0)))
+                pr_encoder_hidden = (model.initHiddenEncoderPR(inputs.size(0)),
+                            model.initHiddenEncoderPR(inputs.size(0)))
 
     # How many steps will the algorithm take through the sequence
     tmp = LEN_SEQ
@@ -164,7 +209,10 @@ def eval(cuda, change_fps, inputs, targets, model, criterion, predict_n_pr, use_
     # For evaluation we don't need a gradient
     with th.no_grad():
         #loss = 0
-        loss = th.zeros(1,requires_grad=False)
+        if not cuda:
+            loss = th.zeros(1,requires_grad=False)
+        else:
+            loss = th.zeros(1, requires_grad=False).cuda()
 
         for im in range(use_n_im-1, target_length+use_n_im):
             # Get one input for model
@@ -172,10 +220,18 @@ def eval(cuda, change_fps, inputs, targets, model, criterion, predict_n_pr, use_
             pr_s = [targets[:,im-i,:] for i in range(use_n_im - 1, -1, -1)]
 
             # Prediction
-            if not use_2_encoders:
-                prediction, encoder_hidden, decoder_hidden = model(image_s, pr_s, use_n_im, predict_n_pr, encoder_hidden, decoder_hidden)
+            if 'Transformer' in str(model):
+                prediction = model(image_s, pr_s, use_n_im, predict_n_pr)
+            elif not use_2_encoders:
+                prediction, encoder_hidden, decoder_hidden = model(image_s, pr_s, use_n_im, predict_n_pr,
+                                                                   encoder_hidden,
+                                                                   decoder_hidden)
             else:
-                prediction, im_encoder_hidden, pr_encoder_hidden, decoder_hidden = model(image_s, pr_s, use_n_im, predict_n_pr, im_encoder_hidden, pr_encoder_hidden, decoder_hidden)
+                prediction, im_encoder_hidden, pr_encoder_hidden, decoder_hidden = model(image_s, pr_s, use_n_im,
+                                                                                         predict_n_pr,
+                                                                                         im_encoder_hidden,
+                                                                                         pr_encoder_hidden,
+                                                                                         decoder_hidden)
 
             # Calculate loss function
             loss += criterion(prediction, targets[:,im+1:im+predict_n_pr+1,:])/predict_n_pr
@@ -206,33 +262,50 @@ def test(cuda, change_fps, i, origins, preds, batchsize, inputs, targets,
         use_2_encoders (boolean) : If True we use the model with two encoders (for frames and for pitch & roll)
                                 Default: False
     """
-
     if cuda:
         # Preparation of hidden vectors for LSTM encoders and decoders
-        if not use_2_encoders:
-            encoder_hidden = (model.initHiddenEncoder(inputs.size(0)).cuda(),
-                        model.initHiddenEncoder(inputs.size(0)).cuda())
+        if not use_2_encoders :
+            if 'LSTM' in str(model) and not 'GRU' in str(model):
+                encoder_hidden = (model.initHiddenEncoder(inputs.size(0)).cuda(),
+                            model.initHiddenEncoder(inputs.size(0)).cuda())
+                decoder_hidden = (model.initHiddenDecoder(targets.size(0)).cuda(),
+                                  model.initHiddenDecoder(targets.size(0)).cuda())
+            elif 'GRU' in str(model) and 'LSTM' in str(model):
+                encoder_hidden = (model.initHiddenEncoder(inputs.size(0)).cuda(),
+                            model.initHiddenEncoder(inputs.size(0)).cuda())
+                decoder_hidden = model.initHiddenDecoder(targets.size(0)).cuda()
+            elif 'GRU' in str(model) and not 'LSTM' in str(model):
+                encoder_hidden = model.initHiddenEncoder(inputs.size(0)).cuda()
+                decoder_hidden = model.initHiddenDecoder(targets.size(0)).cuda()
         else:
-            im_encoder_hidden = (model.initHiddenEncoderIm(inputs.size(0)).cuda(),
-                        model.initHiddenEncoderIm(inputs.size(0)).cuda())
-            pr_encoder_hidden = (model.initHiddenEncoderPR(inputs.size(0)).cuda(),
-                        model.initHiddenEncoderPR(inputs.size(0)).cuda())
+            if 'LSTM' in str(model) and not not 'GRU' in str(model):
+                im_encoder_hidden = (model.initHiddenEncoderIm(inputs.size(0)).cuda(),
+                            model.initHiddenEncoderIm(inputs.size(0)).cuda())
+                pr_encoder_hidden = (model.initHiddenEncoderPR(inputs.size(0)).cuda(),
+                            model.initHiddenEncoderPR(inputs.size(0)).cuda())
 
-        decoder_hidden = (model.initHiddenDecoder(targets.size(0)).cuda(),
-                        model.initHiddenDecoder(targets.size(0)).cuda())
+
     else:
         # Preparation of hidden vectors for LSTM encoders and decoders
-        if not use_2_encoders:
-            encoder_hidden = (model.initHiddenEncoder(inputs.size(0)),
-                        model.initHiddenEncoder(inputs.size(0)))
+        if not use_2_encoders :
+            if 'LSTM' in str(model) and not 'GRU' in str(model):
+                encoder_hidden = (model.initHiddenEncoder(inputs.size(0)),
+                            model.initHiddenEncoder(inputs.size(0)))
+                decoder_hidden = (model.initHiddenDecoder(targets.size(0)),
+                                  model.initHiddenDecoder(targets.size(0)))
+            elif 'GRU' in str(model) and 'LSTM' in str(model):
+                encoder_hidden = (model.initHiddenEncoder(inputs.size(0)),
+                            model.initHiddenEncoder(inputs.size(0)))
+                decoder_hidden = model.initHiddenDecoder(targets.size(0))
+            elif 'GRU' in str(model) and not 'LSTM' in str(model):
+                encoder_hidden = model.initHiddenEncoder(inputs.size(0))
+                decoder_hidden = model.initHiddenDecoder(targets.size(0))
         else:
-            im_encoder_hidden = (model.initHiddenEncoderIm(inputs.size(0)),
-                        model.initHiddenEncoderIm(inputs.size(0)))
-            pr_encoder_hidden = (model.initHiddenEncoderPR(inputs.size(0)),
-                        model.initHiddenEncoderPR(inputs.size(0)))
-
-        decoder_hidden = (model.initHiddenDecoder(targets.size(0)),
-                        model.initHiddenDecoder(targets.size(0)))
+            if 'LSTM' in str(model) and not not 'GRU' in str(model):
+                im_encoder_hidden = (model.initHiddenEncoderIm(inputs.size(0)),
+                            model.initHiddenEncoderIm(inputs.size(0)))
+                pr_encoder_hidden = (model.initHiddenEncoderPR(inputs.size(0)),
+                            model.initHiddenEncoderPR(inputs.size(0)))
 
     # How many steps will the algorithm take through the sequence
     tmp = LEN_SEQ
@@ -242,7 +315,10 @@ def test(cuda, change_fps, i, origins, preds, batchsize, inputs, targets,
     # For testing we don't need a gradient
     with th.no_grad():
         #loss = 0
-        loss = th.zeros(1,requires_grad=False)
+        if not cuda:
+            loss = th.zeros(1,requires_grad=False)
+        else:
+            loss = th.zeros(1, requires_grad=False).cuda()
 
         for im in range(use_n_im-1, target_length+use_n_im):
             # Get one input for model
@@ -250,15 +326,23 @@ def test(cuda, change_fps, i, origins, preds, batchsize, inputs, targets,
             pr_s = [targets[:,im-i,:] for i in range(use_n_im - 1, -1, -1)]
 
             # Prediction
-            if not use_2_encoders:
-                prediction, encoder_hidden, decoder_hidden = model(image_s, pr_s, use_n_im, predict_n_pr, encoder_hidden, decoder_hidden)
+            if 'Transformer' in str(model):
+                prediction = model(image_s, pr_s, use_n_im, predict_n_pr)
+            elif not use_2_encoders:
+                prediction, encoder_hidden, decoder_hidden = model(image_s, pr_s, use_n_im, predict_n_pr,
+                                                                   encoder_hidden,
+                                                                   decoder_hidden)
             else:
-                prediction, im_encoder_hidden, pr_encoder_hidden, decoder_hidden = model(image_s, pr_s, use_n_im, predict_n_pr, im_encoder_hidden, pr_encoder_hidden, decoder_hidden)
+                prediction, im_encoder_hidden, pr_encoder_hidden, decoder_hidden = model(image_s, pr_s, use_n_im,
+                                                                                         predict_n_pr,
+                                                                                         im_encoder_hidden,
+                                                                                         pr_encoder_hidden,
+                                                                                         decoder_hidden)
 
             # Calculate loss function
             loss += criterion(prediction, targets[:,im+1:im+predict_n_pr+1,:])/predict_n_pr
 
-            # Create new index for save results
+            # Create new index for save results #i = 0
             key_tmp = np.linspace(i*target_length*batchsize + (im-use_n_im+1)*batchsize , i*target_length*batchsize + (im-use_n_im+2)*batchsize - 1, batchsize, dtype =int )
 
             # For each frame which we will predict in sequence save the result
@@ -322,7 +406,7 @@ def main(args, num_epochs = 30):
     change_fps = args["change_fps"]
     print(args)
 
-    im_in_one_second = int(24/frame_interval)
+    im_in_one_second = int(24/frame_interval)  #2
 
     predict_n_pr = im_in_one_second * future_window_size
     use_n_im = im_in_one_second * past_window_size
@@ -333,7 +417,7 @@ def main(args, num_epochs = 30):
     seq_per_ep = SEQ_PER_EPISODE_C
     use_2_encoders = False
     # parametr for different models
-    if 'LSTM' in model_type:
+    if 'LSTM' or 'GRU' in model_type:
         use_LSTM = True
     else:
         seq_per_ep = int(360/use_n_im)
@@ -448,6 +532,7 @@ def main(args, num_epochs = 30):
         use_n_im = past_window_size
 
     print("Model  --->  ", model_type)
+    # model of Nazar
     if model_type == "CNN_stack_PR_FC":
         model = CNN_stack_PR_FC(cuda = cuda, num_channel=use_n_channels, cnn_fc_size = 1024 + use_n_im*2, num_output=predict_n_pr*2 )
     elif model_type == "CNN_PR_FC":
@@ -460,8 +545,13 @@ def main(args, num_epochs = 30):
         model = CNN_LSTM_encoder_decoder_images_PR(cuda = cuda, encoder_input_size = use_n_im*1026, encoder_hidden_size = encoder_latent_vector, decoder_input_size = encoder_latent_vector, decoder_hidden_size = decoder_latent_vector,  output_size = 2*predict_n_pr)
         #use pretrained model
         use_pretrainted(model, AutoEncoder())
+
+
+
     elif model_type == "LSTM_encoder_decoder_PR":
-        model = LSTM_encoder_decoder_PR(cuda = cuda, encoder_input_size = use_n_im*2, encoder_hidden_size = 300, decoder_hidden_size = 300,  output_size = 2*predict_n_pr)
+        model = LSTM_encoder_decoder_PR(cuda=cuda, encoder_input_size=use_n_im * 2,
+                                        encoder_hidden_size=encoder_latent_vector,
+                                        decoder_hidden_size=decoder_latent_vector, output_size=2 * predict_n_pr)
     elif model_type == "CNN_LSTM_encoder_decoder_images":
         model = CNN_LSTM_encoder_decoder_images(cuda = cuda, encoder_input_size = use_n_im*1024, encoder_hidden_size = encoder_latent_vector, decoder_hidden_size = encoder_latent_vector,  output_size = 2*predict_n_pr)
         #use pretrained model
@@ -476,6 +566,87 @@ def main(args, num_epochs = 30):
         #use pretrained model
         use_pretrainted(model, AutoEncoder())
         use_2_encoders = True
+
+
+    #model of Dajing
+    elif model_type == "CNN_LSTM_encoder_GRU_decoder_images_PR":
+        model = CNN_LSTM_encoder_GRU_decoder_images_PR(cuda = cuda, encoder_input_size = use_n_im*1026, encoder_hidden_size = encoder_latent_vector, decoder_input_size = encoder_latent_vector, decoder_hidden_size = decoder_latent_vector,  output_size = 2*predict_n_pr)
+        #use pretrained model
+        use_pretrainted(model, AutoEncoder())
+
+    elif model_type == "LSTM_encoder_GRU_decoder_PR":
+        model = LSTM_encoder_GRU_decoder_PR(cuda=cuda, encoder_input_size=use_n_im * 2,
+                                        encoder_hidden_size=encoder_latent_vector,
+                                        decoder_hidden_size=decoder_latent_vector, output_size=2 * predict_n_pr)
+
+    elif model_type == "LSTM_encoder_GRU_decoder_PR_many":
+        model = LSTM_encoder_GRU_decoder_PR_many(cuda=cuda, encoder_input_size= 2,
+                                        encoder_hidden_size=encoder_latent_vector,
+                                        decoder_hidden_size=decoder_latent_vector, output_size=2 )
+
+    elif model_type == "CNN_LSTM_encoder_attention_decoder_images_PR_many":
+        model = CNN_LSTM_encoder_attention_decoder_images_PR_many(cuda = cuda, encoder_input_size = use_n_im*1026, encoder_hidden_size = encoder_latent_vector, decoder_input_size = encoder_latent_vector + decoder_latent_vector, decoder_hidden_size = encoder_latent_vector ,  output_size = 2)
+        #use pretrained model
+        use_pretrainted(model, AutoEncoder())
+
+    elif model_type == "CNN_LSTM_encoder_decoder_images_PR_many":
+        model = CNN_LSTM_encoder_decoder_images_PR_many(cuda = cuda, encoder_input_size = 1026, encoder_hidden_size = encoder_latent_vector, decoder_input_size = encoder_latent_vector , decoder_hidden_size = encoder_latent_vector ,  output_size = 2)
+        #use pretrained model
+        use_pretrainted(model, AutoEncoder())
+
+    elif model_type == "CNN_LSTM_encoder_GRU_attention_decoder_images_PR_many":
+        model = CNN_LSTM_encoder_GRU_attention_decoder_images_PR_many(cuda = cuda, encoder_input_size = use_n_im*1026, encoder_hidden_size = encoder_latent_vector, decoder_input_size = encoder_latent_vector + decoder_latent_vector, decoder_hidden_size = encoder_latent_vector ,  output_size = 2)
+        #use pretrained model
+        use_pretrainted(model, AutoEncoder())
+
+    elif model_type == "CNN_GRU_encoder_decoder_images_PR":
+        model = CNN_GRU_encoder_decoder_images_PR(cuda = cuda, encoder_input_size = use_n_im*1026, encoder_hidden_size = encoder_latent_vector, decoder_input_size = encoder_latent_vector , decoder_hidden_size = decoder_latent_vector ,  output_size = 2*predict_n_pr)
+        #use pretrained model
+        use_pretrainted(model, AutoEncoder())
+
+    elif model_type == "CNN_GRU_encoder_attention_decoder_images_PR":
+        model = CNN_GRU_encoder_attention_decoder_images_PR(cuda = cuda, encoder_input_size = use_n_im*1026, encoder_hidden_size = encoder_latent_vector, decoder_input_size = encoder_latent_vector + decoder_latent_vector, decoder_hidden_size = decoder_latent_vector,  output_size = 2*predict_n_pr)
+        #use pretrained model
+        use_pretrainted(model, AutoEncoder())
+
+    elif model_type == "CNN_LSTM_encoder_attention_decoder_images_PR":
+        model = CNN_LSTM_encoder_attention_decoder_images_PR(cuda = cuda, encoder_input_size = use_n_im*1026, encoder_hidden_size = encoder_latent_vector, decoder_input_size = encoder_latent_vector + decoder_latent_vector, decoder_hidden_size = decoder_latent_vector,  output_size = 2*predict_n_pr)
+        #use pretrained model
+        use_pretrainted(model, AutoEncoder())
+
+    elif model_type == "CNN_LSTM_encoder_GRU_attention_decoder_images_PR":
+        model = CNN_LSTM_encoder_GRU_attention_decoder_images_PR(cuda = cuda, encoder_input_size = use_n_im*1026, encoder_hidden_size = encoder_latent_vector, decoder_input_size = encoder_latent_vector + decoder_latent_vector, decoder_hidden_size = decoder_latent_vector,  output_size = 2*predict_n_pr)
+        #use pretrained model
+        use_pretrainted(model, AutoEncoder())
+
+    elif model_type == "LSTM_encoder_decoder_PR_many":
+        model = LSTM_encoder_decoder_PR_many(cuda = cuda, encoder_input_size = 2, encoder_hidden_size = encoder_latent_vector, decoder_hidden_size = decoder_latent_vector, output_size = 2)
+
+    elif model_type == "LSTM_encoder_attention_decoder_PR":
+        model = LSTM_encoder_attention_decoder_PR(cuda = cuda, encoder_input_size = use_n_im*2, encoder_hidden_size = encoder_latent_vector, decoder_hidden_size = decoder_latent_vector,  output_size = 2*predict_n_pr, batch_size = batchsize)
+
+    elif model_type == "LSTM_encoder_GRU_attention_decoder_PR":
+        model = LSTM_encoder_GRU_attention_decoder_PR(cuda = cuda, encoder_input_size = use_n_im*2, encoder_hidden_size = encoder_latent_vector, decoder_hidden_size = decoder_latent_vector,  output_size = 2*predict_n_pr, batch_size = batchsize)
+
+    elif model_type == "LSTM_encoder_attention_decoder_PR_many":
+        model = LSTM_encoder_attention_decoder_PR_many(cuda = cuda, encoder_input_size = 2, encoder_hidden_size = encoder_latent_vector, decoder_hidden_size = decoder_latent_vector, output_size = 2)
+
+    elif model_type == "GRU_encoder_decoder_PR":
+        model = GRU_encoder_decoder_PR(cuda=cuda, encoder_input_size=use_n_im * 2,
+                                        encoder_hidden_size=encoder_latent_vector,
+                                        decoder_hidden_size=decoder_latent_vector, output_size=2 * predict_n_pr)
+    elif model_type == "GRU_encoder_attention_decoder_PR":
+        model = GRU_encoder_attention_decoder_PR(cuda = cuda, encoder_input_size = use_n_im*2, encoder_hidden_size = encoder_latent_vector, decoder_hidden_size = decoder_latent_vector,  output_size = 2*predict_n_pr, batch_size = batchsize)
+
+    elif model_type == "GRU_encoder_decoder_PR_many":
+        model = GRU_encoder_decoder_PR_many(cuda = cuda, encoder_input_size = 2, encoder_hidden_size = encoder_latent_vector, decoder_hidden_size = decoder_latent_vector, output_size = 2)
+
+    elif model_type == "GRU_encoder_attention_decoder_PR_many":
+        model = GRU_encoder_attention_decoder_PR_many(cuda = cuda, encoder_input_size = 2, encoder_hidden_size = encoder_latent_vector, decoder_hidden_size = decoder_latent_vector, output_size = 2)
+
+    elif model_type == "TransformerModel_PR":
+        model = TransformerModel_PR(cuda=cuda, encoder_input_size=use_n_im * 2, encoder_hidden_size=encoder_latent_vector, decoder_hidden_size=decoder_latent_vector, output_size=2 * predict_n_pr)
+
     else:
         raise ValueError("Model type not supported")
 
@@ -537,14 +708,19 @@ def main(args, num_epochs = 30):
         model.train()
         train_loss, val_loss = 0.0, 0.0
 
+
         for k, data in enumerate(train_loader):
+
             # use right training process for different models
             if use_LSTM:
                 # unpacked data
-                inputs, p_and_roll = data[0], data[1]
+                inputs, p_and_roll = data[0], data[1] #inputs:torch.Size([24, 30, 3, 54, 96])  p_and_roll:torch.Size([24, 30, 2])
+
+                #print(inputs.shape)
                 # move data to GPU
                 if cuda:
                     inputs, p_and_roll = inputs.cuda(), p_and_roll.cuda()
+                    #print(p_and_roll[0])
                 # Convert to pytorch variables
                 inputs, p_and_roll  = Variable(inputs), Variable(p_and_roll)
                 # training through the sequence
@@ -563,6 +739,7 @@ def main(args, num_epochs = 30):
                 # training process
                 optimizer.zero_grad()
                 predictions = model(inputs, p_and_roll, use_n_im)
+                #predictions = model(inputs, p_and_roll, 2)
                 loss = loss_fn(predictions, targets) / predict_n_pr
 
                 loss.backward()
@@ -576,6 +753,7 @@ def main(args, num_epochs = 30):
         if np.isnan(train_error):
             return {"best_train_loss": np.inf, "best_val_loss": np.inf, "final_test_loss": np.inf}
 
+
         # Do a full pass on validation data
         with th.no_grad():
             # Switch to evaluation mode
@@ -585,6 +763,7 @@ def main(args, num_epochs = 30):
                 if use_LSTM:
                     # unpacked data
                     inputs, p_and_roll = data[0], data[1]
+                    #print(p_and_roll.shape)
                     # move data to GPU
                     if cuda:
                         inputs, p_and_roll = inputs.cuda(), p_and_roll.cuda()
@@ -605,6 +784,7 @@ def main(args, num_epochs = 30):
 
                     # validation process
                     predictions = model(inputs, p_and_roll, use_n_im)
+                   # predictions = model(inputs, p_and_roll, 2)
                     loss = loss_fn(predictions, targets)/ predict_n_pr
                     val_loss += loss.item()
 
@@ -682,6 +862,7 @@ def main(args, num_epochs = 30):
                 inputs, p_and_roll, targets = Variable(inputs), Variable(p_and_roll),Variable(targets)
 
                 predictions = model(inputs, p_and_roll, use_n_im)
+                #predictions = model(inputs, p_and_roll, 2)
 
                 # save results of prediction for visualization
                 key_tmp = np.linspace(key*batchsize , (key+1)*batchsize, batchsize, dtype =int )
@@ -733,12 +914,13 @@ if __name__ == '__main__':
     parser.add_argument('--test_dir', help='if test of hyperparametres ', default="", type=str)
 
     parser.add_argument('--seed', help='Random Seed', default=42, type=int)
-    parser.add_argument('--no_cuda', action='store_true', default=True, help='Disables CUDA training')
+    parser.add_argument('--no_cuda', action='store_true', default=False, help='Disables CUDA training')
 
     parser.add_argument('--load_model', action='store_true', default=False, help='LOAD_MODEL (to continue training)')
     parser.add_argument('--load_weight_date', help='Enter test date', default="2019-07-05 00:36", type=str)
 
-    parser.add_argument('--model_type', help='Model type: cnn', default="LSTM_encoder_decoder_PR", type=str, choices=['CNN_stack_FC_first', 'CNN_stack_FC', 'CNN_LSTM_image_encoder_PR_encoder_decoder', 'CNN_PR_FC', 'CNN_LSTM_encoder_decoder_images', 'LSTM_encoder_decoder_PR', 'CNN_stack_PR_FC', 'CNN_LSTM_encoder_decoder_images_PR', 'CNN_LSTM_decoder_images_PR'])
+    parser.add_argument('--model_type', help='Model type: cnn', default="LSTM_encoder_decoder_PR", type=str, choices=['CNN_stack_FC_first', 'CNN_stack_FC', 'CNN_LSTM_image_encoder_PR_encoder_decoder', 'CNN_PR_FC', 'CNN_LSTM_encoder_decoder_images', 'LSTM_encoder_decoder_PR', 'GRU_encoder_decoder_PR','LSTM_encoder_attention_decoder_PR' , 'CNN_stack_PR_FC', 'CNN_GRU_encoder_decoder_images_PR','CNN_LSTM_encoder_decoder_images_PR', 'CNN_LSTM_decoder_images_PR', 'GRU_encoder_decoder_PR_many', 'LSTM_encoder_decoder_PR_many', 'GRU_encoder_attention_decoder_PR','GRU_encoder_attention_decoder_PR_many','LSTM_encoder_attention_decoder_PR_many', 'CNN_LSTM_encoder_attention_decoder_images_PR_many', 'TransformerModel_PR', 'CNN_LSTM_encoder_attention_decoder_images_PR','CNN_GRU_encoder_attention_decoder_images_PR', 'LSTM_encoder_GRU_decoder_PR', 'LSTM_encoder_GRU_decoder_PR_many', 'LSTM_encoder_GRU_attention_decoder_PR', 'CNN_LSTM_encoder_GRU_attention_decoder_images_PR', 'CNN_LSTM_encoder_GRU_decoder_images_PR', 'CNN_LSTM_encoder_GRU_attention_decoder_images_PR_many', 'CNN_LSTM_encoder_decoder_images_PR_many'])
+
     parser.add_argument('--encoder_latent_vector', help='Size of encoder-latent vector for LSTM', default= 300, type=int)
     parser.add_argument('--decoder_latent_vector', help='Size of decoder-latent vector for LSTM', default= 300, type=int)
 
@@ -753,6 +935,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     args.cuda = (not args.no_cuda) and th.cuda.is_available()
+    #args.cuda = True
 
     if args.test == 0:
         hyperparams = {}

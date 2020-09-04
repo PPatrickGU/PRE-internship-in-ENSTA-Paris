@@ -25,7 +25,7 @@ def handle_integers( params ):
 
 space = {
 	# 'opt': hp.choice('opt', ['adam', 'sgd']),
-	'encoder_latent_vector': hp.quniform( 'encoder_latent_vector', 500, 1500, 1 ),
+	'encoder_latent_vector': hp.quniform( 'encoder_latent_vector', 200, 1500, 1 ),
 	'decoder_latent_vector': hp.quniform( 'decoder_latent_vector', 250, 500, 1 ),
 	'learning_rate': hp.uniform( 'learning_rate', 9e-6, 2e-3),
 	'weight_decay': hp.uniform( 'weight_decay', 9e-5, 3e-3),
@@ -46,11 +46,14 @@ def get_params(args):
 	params['load_weight'] = args.load_model
 	params['load_weight_date'] = args.load_weight_date
 	params['model_type'] = args.model_type
-	params['time_to_predict'] = args.time_to_predict
+	#params['time_to_predict'] = args.time_to_predict
+	params['future_window_size'] = args.future_window_size
 	params['test_dir'] = args.test_dir
 	params['frame_interval'] = args.frame_interval
 	params["use_n_episodes"] = args.use_n_episodes
-	params['use_sec'] = args.use_sec
+	#params['use_sec'] = args.use_sec
+	params['past_window_size'] = args.past_window_size
+	params['change_fps'] = args.change_fps
 
 	return params
 
