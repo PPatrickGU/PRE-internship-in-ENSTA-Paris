@@ -3,7 +3,7 @@
 ## This file is used to save the pictures created by the script. 
 
 <p align="center">
-  <img width="500" src="dgen_img.png">
+  <img width="500" src="dgen_img.jpg">
 </p>
 <p align="justify">
 
