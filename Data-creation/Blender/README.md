@@ -1,6 +1,6 @@
-# wave-simulator
+# Wave-simulator
 
-Main part of the work placed in [reposetory](https://github.com/manubatet/Ship-simulator).
+The origin of this work is  https://github.com/manubatet/Ship-simulator
 
 Take into account that it is not directly executed by python, it is executed by Blender.  This script has been updated by Dajing  to adapt to the Blender 2.83, so instalation of Blender 2.83 is needed.
 
@@ -15,6 +15,8 @@ Go to Ubuntu Software and  install  directely Blender 2.83 (the script should be
     Go to the directory where the script is, and then type in the terminal:
     blender ocean_render.blend --python macro.py
 
+A file of the name  'data' is necessary in the directory where the script is.
+ 
 # Files
 ## parameters.py
 Here you have all the parameters that the macro is goingo to import. You can select to iterate between several parameters. Those parameters are only choppiness, wave scale, wind velocity and random seed. Is not very difficult to add more parameters but those are the parameters that are more important to change the simulation. Here: https://docs.blender.org/manual/en/dev/modeling/modifiers/simulate/ocean.html you can find what does each parameter exactly do related to the ocean creation. The parameters about the render are clearly explained in the code.
@@ -34,5 +36,4 @@ Generated data
 <p align="justify">
 
 # Contact:
-
 Manuel Cortés Batet batetcortesm@gmail.com
