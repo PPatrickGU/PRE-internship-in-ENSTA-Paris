@@ -9,14 +9,14 @@ To solve our pitch and roll prediction problem, 16 mdoels based on the existent 
 
 16 models were created:
 
-/textit{Models with sequecne length of size 1}
+***Models with sequecne length of size 1***
 - GRU encoder deocder PR model
 - GRU encoder deocder PR model
 - CNN GRU encoder decoder images PR  model
 - CNN GRU encoder attention decoder images PR  model
 - CNN LSTM encoder GRU attention decoder images PR  model
 
-/textit{Models with sequecne length of size N}
+***Models with sequecne length of size N***
 - LSTM encoder decoder PR* model
 - GRU encoder decoder PR* model
 - LSTM encoder attention decoder PR* model
@@ -26,10 +26,10 @@ To solve our pitch and roll prediction problem, 16 mdoels based on the existent 
 - CNN LSTM encoder attention decoder PR* model
 - CNN LSTM encoder GRU attention decoder images PR* model
   
-  \textit{Models without RNN}
+***Models without RNN***
 - TransformerModel_PR model
 
-    Models created
+
 <p align="center">
   <img width="600" src="Plots/Models created.PNG">
 </p>
