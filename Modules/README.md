@@ -31,6 +31,7 @@ To solve our pitch and roll prediction problem, 16 mdoels based on the existent 
 ***Models without RNN***
 - TransformerModel_PR model
 
+Here the * in the name of models are replaced by many in the code.
 
 <p align="center">
   <img width="600" src="Plots/Models created.PNG">
@@ -77,28 +78,28 @@ First, the basic settings were tested;
 The results of the experiments can be found in Table, which shows the normalized average MSE of the sum of pitch and roll over the predicted sequence (of 24 frames of length).
 
 <p align="center">
-<img width="900" src="plots/Results_for_all_models_train_val_test.png">
+<img width="900" src="Plots/Results_for_all_models_train_val_test.png">
 </p>
 <p align="justify">
 
-Red line - our baseline LSTM encoder decoder PR model, the worst result; Light green line - the best result at the moment; Strong green line - second result.
+Red line - our baseline LSTM encoder decoder PR model, the worst result; Strong green line - the best result at the moment; light green line - second result.
 
 
 <p align="center">
-<img width="900" src="plots/Testting_results_for_all_models_PR.png">
+<img width="900" src="Plots/Testting_results_for_all_models_PR.png">
 </p>
 <p align="justify">
 
-Testing results for all models. Denormalized MSE for pitch and roll at 10s in predicted sequences. Red line - our baseline and the worst result; Light green line - the best result at the moment; Strong green line - second result.
+Testing results for all models. Denormalized MSE for pitch and roll at 10s in predicted sequences. Red line - our baseline and the worst result; Strong green line - the best result at the moment; Lightgreen line - second result.
 
 
 <p align="center">
-<img width="900" src="plots/TRAIN_VAL_all_models_loss_function.png">
+<img width="900" src="Plots/TRAIN_VAL_all_models_loss_function.png">
 </p>
 <p align="justify">
 
 <p align="center">
-<img width="900" src="plots/TRAIN_TEST_all_models_loss_function.png">
+<img width="900" src="Plots/TRAIN_TEST_all_models_loss_function.png">
 </p>
 <p align="justify">
 
@@ -206,7 +207,8 @@ options:
  - cuda            (boolean): True if we can use GPU
  - load_weight     (boolean): True if we will load model
  - load_weight_date(str): date of the test (part of the path)
- - model_type      (str): model type  - ['CNN_stack_FC_first', 'CNN_stack_FC', 'CNN_LSTM_image_encoder_PR_encoder_decoder', 'CNN_PR_FC', 'CNN_LSTM_encoder_decoder_images', 'LSTM_encoder_decoder_PR', 'CNN_stack_PR_FC', 'CNN_LSTM_encoder_decoder_images_PR', 'CNN_LSTM_decoder_images_PR'] 
+ - model_type      (str): model type  - ['CNN_stack_FC_first', 'CNN_stack_FC', 'CNN_LSTM_image_encoder_PR_encoder_decoder', 'CNN_PR_FC', 'CNN_LSTM_encoder_decoder_images', 'LSTM_encoder_decoder_PR', 'GRU_encoder_decoder_PR','LSTM_encoder_attention_decoder_PR' , 'CNN_stack_PR_FC', 'CNN_GRU_encoder_decoder_images_PR','CNN_LSTM_encoder_decoder_images_PR', 'CNN_LSTM_decoder_images_PR', 'GRU_encoder_decoder_PR_many', 'LSTM_encoder_decoder_PR_many', 'GRU_encoder_attention_decoder_PR','GRU_encoder_attention_decoder_PR_many','LSTM_encoder_attention_decoder_PR_many', 'CNN_LSTM_encoder_attention_decoder_images_PR_many', 'TransformerModel_PR', 'CNN_LSTM_encoder_attention_decoder_images_PR','CNN_GRU_encoder_attention_decoder_images_PR', 'LSTM_encoder_GRU_decoder_PR', 'LSTM_encoder_GRU_decoder_PR_many', 'LSTM_encoder_GRU_attention_decoder_PR', 'CNN_LSTM_encoder_GRU_attention_decoder_images_PR', 'CNN_LSTM_encoder_GRU_decoder_images_PR', 'CNN_LSTM_encoder_GRU_attention_decoder_images_PR_many', 'CNN_LSTM_encoder_decoder_images_PR_many'])
+
  - encoder_latent_vector (int): size of encoder latent vector - [0 - 10000]
  - decoder_latent_vector (int): size of decoder latent vector - [0 - 10000]
  - future_window_size    (int): number of seconds to predict - [0 - 30]
