@@ -13,7 +13,7 @@ First of all, a data set is created by using 3D graphics generator Blender, whic
 
 Keywords:  Deep learning, Ship motion, Time series forecasting, Blender, Unreal Engine, LSTM, GRU, Attention, Transformer 
 
-> Deep learning for predicting ship motion from images, pitches and data.
+> Deep learning for predicting ship motion from images, pitches and rolls.
 > Dajing GU, 2020.
 > [[Report]](https://drive.google.com/file/d/1f1X34hPGru_1TWm-Wwvk2vFtxVj1hsTX/view?usp=sharing)
 
