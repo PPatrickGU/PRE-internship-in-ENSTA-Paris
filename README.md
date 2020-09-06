@@ -5,7 +5,7 @@
 
 
 
-### Abstract
+## Abstract
 
 With the continuous improvement of computing power, more and more autonomous driving systems involving artificial intelligence have now been developed, which can meet people's requirements for higher efficiency and more comfort. Marine transportation plays an important role in the increasing globalization. I worked on the problem of predicting ship motion from images of the sea surface and previous pitches and rolls.
 
@@ -24,7 +24,7 @@ This work is based on the work of Nazar,  some information can be found here: [[
 
 
 
-### PLan
+## PLan
 
 The whole work of this intership can be divided into two parts: Data generation & Models creation.
 
@@ -36,7 +36,7 @@ Even though the simulation of waves offered by blender helps a lot, many physica
 #### Model creation
 16 models based on Nazar's work are created. GRU - Gated recurrent unit networks, Attention mechanism are used. The structure of the extent models are changed from sequence length of size 1 to sequence length of size N in order to make full use of Attention Mechanism. Transformer Model are also considered to be used. An overview of all the models above is given, and the proposed model created in this internship are also analyzed. For more details, see [[Unreal Engine]](https://github.com/PPatrickGU/PRE-internship-in-ENSTA-Paris/tree/master/Modules)
 
-### Software required
+## Software required
 In this work, the following softwares are used: Blender 2.83+, Anaconda and pytorch.
 
 #### Blender 2.83
