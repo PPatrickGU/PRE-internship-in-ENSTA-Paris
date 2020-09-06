@@ -12,7 +12,7 @@ Go to Ubuntu Software and  install  directely Blender 2.83 (the script should be
 
 blender filename.blend --python script.py in our case
     
-    blender ocean_render.blend --python macro.p
+    blender ocean_render.blend --python macro.py
 Go to the directory where the script is, and then type in the terminal:
     
     blender ocean_render.blend --python macro.py
