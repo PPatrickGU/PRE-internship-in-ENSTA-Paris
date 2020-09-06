@@ -64,9 +64,40 @@ LSTM/GRU encoder attention deocder PR*  |  Attention deocder*
 :-------------------------:|:-------------------------:
 <img src="Plots/Diagram of LSTM&GRU encoder attention decoder images PR of size N.PNG" width="486" />  | <img src="Plots/Diagram of attention decoder N_2.PNG" width="486" />
 
+## Comparison between models with sequence length of size 1 and models with sequence length of size N
+The difference between the models with sequence length of size 1 and models with sequence length of size N exists both in the encoder and the decoder. Here N is the number of frames we used as the input of the models. We take LSTM encoder decoder PR as an example in the comparison below.
 
+#### Difference in the part of encoder
+In the models of size 1, N frames are concatenated in one sequence as the encoder input, with 2 features (pitch and roll) for each frame. So the encoder input is one sequence with N · 2 words, whose shape is [batchsize, 1, N · 2]. And the size of encoder output is [batchsize, 1, ∗], where ∗ is the latent hidden size (embedding size) we set for the encoder.
 
-### Results
+And for models of size N, N frames are used respectively as input in N sequences. The encoder input is N sequences, with 2 words (pitch and roll) in each sequence. So the encoder input is of shape [batchsize, N, 2], and the encoder output is of size [batchsize, N, ∗], where ∗ is the latent hidden size (embedding size) we set for the encoder.
+
+encoder of models with sequence length of size 1  |  encoder of models with sequence length of size N
+:-------------------------:|:-------------------------:
+<img src="Plots/sequence_length_1.PNG" width="486" />  | <img src="Plots/sequence_length_N.PNG" width="486" />
+
+The output of a RNN model is the ensemble of the hidden states of all time steps. So in models of size 1, there is only one hidden state can be used, and for new models, there are N hidden states can be used, which caters to the requirements of Attention Mechanism.
+
+#### Difference in the part of decoder
+As for the decoder, there are also some differences.
+
+In models of size 1, M frames are predicted in only one step, which means the hidden states are used only once when M frames are predicted. A step in the models of size 1 is replaced with many steps in the models of size 1.
+
+<p align="center">
+<img width="900" src="Plots/encoder of models with sequence length of size 1.png">
+</p>
+<p align="justify">
+
+For models of size N, instead of predicting the result at once, the M frames are predicted frame by frame, the previous hidden states are used and updated when each frame in the future is predicted, which can satisfy the requirements of Attention Mechanism.
+
+<p align="center">
+<img width="900" src="Plots/encoder of models with sequence length of size n.png">
+</p>
+<p align="justify">
+
+The last encoder input will be the first decoder input of the models to predict one frame in the future. Then the newest decoder output will be the new decoder input of next step. After a cycle of M times, the M decoder output will be concatenated as the final result of prediction. The Attention Mechanism is able to connect the present frame with the hidden states of the previous hidden states. So an attention layer added in the decoder can make better use of the hidden states as well as update them in each step of the cycle.
+
+## Results
 
 First, the basic settings were tested;
 
