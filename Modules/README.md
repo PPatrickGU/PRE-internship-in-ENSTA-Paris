@@ -1,59 +1,62 @@
+# Model Creation
 
-### Blender simulation
-
-Blender, a 3D graphics generator , was used to generate dataset. 
-
-Thanks to the work presented in [report](https://github.com/manubatet/Ship-simulator/blob/master/ENSTA_ShipSimulator.pdf), we can use ready-made scripts to generate the necessary data. For details, see the part of \textbf{data createion} and [link](https://github.com/Nazotron1923/ship-ocean_simulation_BLENDER))
-
-### Datasets
-
-In general, we generated 669 episodes (400 images per episode) = 267,600 images = 2230 minutes = 37 hours of simulations. 
-
-Project can be obtained from [[Google drive]](https://drive.google.com/drive/folders/1RF8_wFfcIM0GIklXflPYv-tK3uaEWSSZ?usp=sharing)
-
-### Models
-
-To solve our pitch and roll prediction problem, existing model architectures will be used, whose advantages will be combined to achieve the best result. To begin, we consider the basic architectures for images - Convolutional Neural Networks and time series (in our case the simulation of the sea surface) - Long Short-Term Memory networks.
+To solve our pitch and roll prediction problem, 16 mdoels based on the existent wors are created. GRU - Gated recurrent unit networks, Attention mechanism are used. The structure of the extent models are changed from sequence length of size 1 to sequence length of size N in order to make full use of Attention Mechanism. Transformer Model are also considered to be used. An overview of all the models above is given, and the proposed model created in this internship are also analyzed. 
 
 <p align="center">
-  <img width="600" src="plots/numenclature.PNG">
+  <img width="600" src="Plots/numenclature.PNG">
 </p>
 <p align="justify">
 
-9 models were created:
-- CNN stack FC model
-  -- version 1: predict only one pitch and roll
-  -- version 2: predict sequence of pitch and roll
-- CNN stack PR FC model   
-- CNN PR FC model
-- LSTM encoder decoder PR model
-- CNN LSTM img-encoder PR-encoder decoder model
-- CNN LSTM encoder decoder images PR model
-- CNN LSTM encoder decoder images model
-- CNN LSTM images PR model
+16 models were created:
+- Models with sequecne length of size 1
+-- GRU encoder deocder PR model
+-- GRU encoder deocder PR model
+-- CNN GRU encoder decoder images PR  model
+-- CNN GRU encoder attention decoder images PR  model
+-- CNN LSTM encoder GRU attention decoder images PR  model
+- Models with sequecne length of size N
+-- LSTM encoder decoder PR* model
+-- GRU encoder decoder PR* model
+-- LSTM encoder attention decoder PR* model
+-- LSTM encoder GRU attention decoder PR* model
+-- GRU encoder attention decoder PR* model
+-- CNN GRU encoder decoder PR* model
+-- CNN LSTM encoder attention decoder PR* model
+-- CNN LSTM encoder GRU attention decoder images PR* model
+- Models without RNN
+-- TransformerModel_PR model
 
-
-CNN stack version 1 FC  |  CNN stack version 2 FC
-:-------------------------:|:-------------------------:
-<img src="plots/CNN_stack_FC_first.png" width="486" />  | <img src="plots/CNN_stack_FC.png" width="486" />
-
-CNN stack PR FC model  |  CNN PR FC model
-:-------------------------:|:-------------------------:
-<img src="plots/CNN_stack_PR_FC.png" width="486" />  | <img src="plots/CNN_PR_FC.png" width="486" />
-
-              LSTM encoder decoder PR model
+    Models created
 <p align="center">
-  <img width="600" src="plots/LSTM_encoder_decoder_PR.png">
+  <img width="600" src="Plots/Models created.PNG">
 </p>
 <p align="justify">
 
-CNN LSTM img-encoder PR-encoder decoder model  |  CNN LSTM encoder decoder images PR model
-:-------------------------:|:-------------------------:
-<img src="plots/CNN_LSTM_im_encoder_pr_encoder_decoder.png" width="486" />  | <img src="plots/CNN_LSTM_encoder_decoder_images_PR.png" width="486" />
 
-CNN LSTM encoder decoder images model  |  CNN LSTM images PR model
+LSTM/GRU encoder deocder PR  | CNN LSTM/GRU encoder decoder images PR
 :-------------------------:|:-------------------------:
-<img src="plots/CNN_LSTM_encoder_decoder_images.png" width="486" />  | <img src="plots/CNN_LSTM_images_PR.png" width="486" />
+<img src="Plots/Diagram of LSTM&GRU encoder decoder PR.PNG" width="486" />  | <img src="Plots/Diagram of CNN LSTM&GRU encoder decoder images PR.PNG" width="486" />
+
+LSTM/GRU encoder attention deocder PR  |  Attention deocder
+:-------------------------:|:-------------------------:
+<img src="Plots/Diagram of LSTM&GRU encoder attention decoder images PR.PNG" width="486" />  | <img src="Plots/Diagram of Attention Decoder of size1_2.PNG" width="486" />
+
+Attention layer of size 1  | CNN LSTM/GRU encoder attention  decoder images PR
+:-------------------------:|:-------------------------:
+<img src="Plots/Diagram of attention layer_2.PNG.png" width="486" />  | <img src="Plots/Diagram of CNN LSTM&GRU encoder attention decoder images PR.PNG" width="486" />
+
+
+LSTM/GRU encoder deocder PR*  | CNN LSTM/GRU encoder decoder images PR*
+:-------------------------:|:-------------------------:
+<img src="Plots/Diagram of LSTM&GRU encoder decoder PR_sizeN.PNG" width="486" />  | <img src="Plots/Diagram of CNN LSTM&GRU encoder decoder images PR_sizeN.PNG" width="486" />
+
+LSTM/GRU deocder*  | | CNN LSTM/GRU encoder attention  decoder images PR*
+:-------------------------:|:-------------------------:
+<img src="Plots/Diagram of LSTM&GRU decoder of size N_2.PNG" width="486" />  | <img src="Plots/Diagram of CNN LSTM&GRU encoder attention decoder images PR of size N.PNG" width="486" />
+
+LSTM/GRU encoder attention deocder PR*  |  Attention deocder*
+:-------------------------:|:-------------------------:
+<img src="Plots/Diagram of LSTM&GRU encoder attention decoder images PR of size N.PNG" width="486" />  | <img src="Plots/Diagram of attention decoder N_2.PNG.PNG" width="486" />
 
 
 
@@ -62,7 +65,7 @@ CNN LSTM encoder decoder images model  |  CNN LSTM images PR model
 First, the basic settings were tested;
 
 <p align="center">
-<img width="300" src="plots/param_for_test.png">
+<img width="300" src="Plots/param_for_test.png">
 </p>
 <p align="justify">
 
