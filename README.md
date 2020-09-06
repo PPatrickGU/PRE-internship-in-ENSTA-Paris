@@ -3,6 +3,8 @@
 
  Deep learning for predicting ship motion from images, pitches and rolls
 
+
+
 ### Abstract
 
 With the continuous improvement of computing power, more and more autonomous driving systems involving artificial intelligence have now been developed, which can meet people's requirements for higher efficiency and more comfort. Marine transportation plays an important role in the increasing globalization. I worked on the problem of predicting ship motion from images of the sea surface and previous pitches and rolls.
@@ -18,6 +20,9 @@ Keywords:  Deep learning, Ship motion, Time series forecasting, Blender, Unreal 
 Project data & results: [[Google drive]]()
 
 This work is based on the work of Nazar,  some information can be found here: [[link]](https://github.com/Nazotron1923/Deep_learning_models_for_ship_motion_prediction_from_images)
+
+
+
 
 ### PLan
 
