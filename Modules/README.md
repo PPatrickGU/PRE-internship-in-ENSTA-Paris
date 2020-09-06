@@ -74,7 +74,7 @@ And for models of size N, N frames are used respectively as input in N sequences
 
 encoder of models with sequence length of size 1  |  encoder of models with sequence length of size N
 :-------------------------:|:-------------------------:
-<img src="Plots/sequence_length_1.PNG" width="486" />  | <img src="Plots/sequence_length_N.PNG" width="486" />
+<img src="Plots/sequence_length_1.PNG" width="486" />  | <img src="Plots/sequence_length_n.PNG" width="486" />
 
 The output of a RNN model is the ensemble of the hidden states of all time steps. So in models of size 1, there is only one hidden state can be used, and for new models, there are N hidden states can be used, which caters to the requirements of Attention Mechanism.
 
@@ -84,14 +84,14 @@ As for the decoder, there are also some differences.
 In models of size 1, M frames are predicted in only one step, which means the hidden states are used only once when M frames are predicted. A step in the models of size 1 is replaced with many steps in the models of size 1.
 
 <p align="center">
-<img width="900" src="Plots/encoder of models with sequence length of size 1.png">
+<img width="900" src="Plots/decoder of models with sequence length of size 1.png">
 </p>
 <p align="justify">
 
 For models of size N, instead of predicting the result at once, the M frames are predicted frame by frame, the previous hidden states are used and updated when each frame in the future is predicted, which can satisfy the requirements of Attention Mechanism.
 
 <p align="center">
-<img width="900" src="Plots/encoder of models with sequence length of size n.png">
+<img width="900" src="Plots/decoder of models with sequence length of size n.png">
 </p>
 <p align="justify">
 
