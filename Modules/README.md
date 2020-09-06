@@ -175,7 +175,7 @@ To run all scripts the presented environment is needed:
 
 2. create directory tree:
 
----> Pre
+---> Modules
 
 ------> 3dmodel
 
@@ -183,7 +183,7 @@ To run all scripts the presented environment is needed:
 
 3. download the images dataset [here](https://drive.google.com/drive/folders/1RF8_wFfcIM0GIklXflPYv-tK3uaEWSSZ?usp=sharing) if you have not yet and put the dataset under the directory **3dmodel**
 
-4. for train, goto Pre's parent folder and run command:
+4. for train, goto Modules's parent folder and run command:
 
 ```
 python3 -m Pre.train --train_folder Pre/3dmodel/test_4_episode_ --num_epochs 50 --batchsize 24 --learning_rate 0.001 --opt "adam" --seed 42 --no_cuda True --model_type "LSTM_encoder_decoder_PR" --encoder_latent_vector 300 --decoder_latent_vector 300 --future_window_size 20 --past_window_size 20 --frame_interval 12 --weight_decay 0.001 --use_n_episodes 540 --change_fps False --test 0
