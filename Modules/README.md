@@ -139,7 +139,7 @@ Testing results for all models. Denormalized MSE for pitch and roll at 10s in pr
 Using Hyperband [algorithm](https://github.com/zygmuntz/hyperband) the best configuration for CNN_GRU_encoder_decoder_images_PR model was found:
 
 <p align="center">
-<img width="600" src="Plots/best_config.png">
+<img width="450" src="Plots/best_config.png">
 </p>
 <p align="justify">
 
