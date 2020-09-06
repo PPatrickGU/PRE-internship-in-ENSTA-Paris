@@ -34,7 +34,7 @@ To solve our pitch and roll prediction problem, 16 mdoels based on the existent 
 Here the * in the name of models are replaced by many in the code.
 
 <p align="center">
-  <img width="600" src="Plots/Models created.PNG">
+  <img width="900" src="Plots/Models created.PNG">
 </p>
 <p align="justify">
 
