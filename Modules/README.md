@@ -3,28 +3,28 @@
 To solve our pitch and roll prediction problem, 16 mdoels based on the existent wors are created. GRU - Gated recurrent unit networks, Attention mechanism are used. The structure of the extent models are changed from sequence length of size 1 to sequence length of size N in order to make full use of Attention Mechanism. Transformer Model are also considered to be used. An overview of all the models above is given, and the proposed model created in this internship are also analyzed. 
 
 <p align="center">
-  <img width="600" src="Plots/numenclature.PNG">
+  <img width="600" src="Plots/numenclature.png">
 </p>
 <p align="justify">
 
 16 models were created:
 - Models with sequecne length of size 1
--- GRU encoder deocder PR model
--- GRU encoder deocder PR model
--- CNN GRU encoder decoder images PR  model
--- CNN GRU encoder attention decoder images PR  model
--- CNN LSTM encoder GRU attention decoder images PR  model
+  -- GRU encoder deocder PR model
+  -- GRU encoder deocder PR model
+  -- CNN GRU encoder decoder images PR  model
+  -- CNN GRU encoder attention decoder images PR  model
+  -- CNN LSTM encoder GRU attention decoder images PR  model
 - Models with sequecne length of size N
--- LSTM encoder decoder PR* model
--- GRU encoder decoder PR* model
--- LSTM encoder attention decoder PR* model
--- LSTM encoder GRU attention decoder PR* model
--- GRU encoder attention decoder PR* model
--- CNN GRU encoder decoder PR* model
--- CNN LSTM encoder attention decoder PR* model
--- CNN LSTM encoder GRU attention decoder images PR* model
+  -- LSTM encoder decoder PR* model
+  -- GRU encoder decoder PR* model
+  -- LSTM encoder attention decoder PR* model
+  -- LSTM encoder GRU attention decoder PR* model
+  -- GRU encoder attention decoder PR* model
+  -- CNN GRU encoder decoder PR* model
+  -- CNN LSTM encoder attention decoder PR* model
+  -- CNN LSTM encoder GRU attention decoder images PR* model
 - Models without RNN
--- TransformerModel_PR model
+  -- TransformerModel_PR model
 
     Models created
 <p align="center">
@@ -43,20 +43,20 @@ LSTM/GRU encoder attention deocder PR  |  Attention deocder
 
 Attention layer of size 1  | CNN LSTM/GRU encoder attention  decoder images PR
 :-------------------------:|:-------------------------:
-<img src="Plots/Diagram of attention layer_2.PNG.png" width="486" />  | <img src="Plots/Diagram of CNN LSTM&GRU encoder attention decoder images PR.PNG" width="486" />
+<img src="Plots/Diagram of attention layer_2.PNG" width="486" />  | <img src="Plots/Diagram of CNN LSTM&GRU encoder attention decoder images PR.PNG" width="486" />
 
 
 LSTM/GRU encoder deocder PR*  | CNN LSTM/GRU encoder decoder images PR*
 :-------------------------:|:-------------------------:
 <img src="Plots/Diagram of LSTM&GRU encoder decoder PR_sizeN.PNG" width="486" />  | <img src="Plots/Diagram of CNN LSTM&GRU encoder decoder images PR_sizeN.PNG" width="486" />
 
-LSTM/GRU deocder*  | | CNN LSTM/GRU encoder attention  decoder images PR*
+LSTM/GRU deocder*   | CNN LSTM/GRU encoder attention  decoder images PR*
 :-------------------------:|:-------------------------:
 <img src="Plots/Diagram of LSTM&GRU decoder of size N_2.PNG" width="486" />  | <img src="Plots/Diagram of CNN LSTM&GRU encoder attention decoder images PR of size N.PNG" width="486" />
 
 LSTM/GRU encoder attention deocder PR*  |  Attention deocder*
 :-------------------------:|:-------------------------:
-<img src="Plots/Diagram of LSTM&GRU encoder attention decoder images PR of size N.PNG" width="486" />  | <img src="Plots/Diagram of attention decoder N_2.PNG.PNG" width="486" />
+<img src="Plots/Diagram of LSTM&GRU encoder attention decoder images PR of size N.PNG" width="486" />  | <img src="Plots/Diagram of attention decoder N_2.PNG" width="486" />
 
 
 
