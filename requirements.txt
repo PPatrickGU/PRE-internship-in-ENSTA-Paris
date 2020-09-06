@@ -7,7 +7,7 @@ attrs==19.1.0
 Babel==2.6.0
 backcall==0.1.0
 base-local-planner==1.16.6
-bleach==3.1.0
+bleach==3.1.4
 bondpy==1.8.5
 camera-calibration==1.15.0
 camera-calibration-parsers==1.11.13
