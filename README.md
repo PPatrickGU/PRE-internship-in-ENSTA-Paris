@@ -24,7 +24,7 @@ This work is based on the work of Nazar,  some information can be found here: [[
 
 
 
-## PLan
+## Plan
 
 The whole work of this intership can be divided into two parts: Data generation & Models creation.
 
