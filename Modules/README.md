@@ -5,7 +5,7 @@ This work is based on the work of Nazar,  some information can be found here: [[
 To solve our pitch and roll prediction problem, 16 mdoels based on the existent wors are created. GRU - Gated recurrent unit networks, Attention mechanism are used. The structure of the extent models are changed from sequence length of size 1 to sequence length of size N in order to make full use of Attention Mechanism. Transformer Model are also considered to be used. An overview of all the models above is given, and the proposed model created in this internship are also analyzed. 
 
 <p align="center">
-  <img width="600" src="Plots/numenclature.png">
+  <img width="750" src="Plots/numenclature.png">
 </p>
 <p align="justify">
 
@@ -34,7 +34,7 @@ To solve our pitch and roll prediction problem, 16 mdoels based on the existent 
 Here the * in the name of models are replaced by many in the code.
 
 <p align="center">
-  <img width="900" src="Plots/Models created.PNG">
+  <img width="800" src="Plots/Models created.PNG">
 </p>
 <p align="justify">
 
