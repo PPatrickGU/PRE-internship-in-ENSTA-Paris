@@ -46,16 +46,16 @@ For Blender 2.83+, please check Ubuntu Software to find the correct version of B
 Anaconda can be download easily from the official website: [[link]](https://www.anaconda.com/products/individual). After the installation, the first thing we need to do is to transplant the environment.
 There are two environment files here:
 
-    environment.yml & requirements.txt
+    environment.yaml & requirements.txt
 
 To import the environment, we need to go to the directory where the two files are located:
    
-    conda env create -f environment.yml
+    conda env create -f environment.yaml
     pip install -r requirements.txt
    
 To export the environments:
     
-    conda env export > environment.yml
+    conda env export > environment.yaml
     pip freeze > requirements.txt
     
 To activate the environments:
