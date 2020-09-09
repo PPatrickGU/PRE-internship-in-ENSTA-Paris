@@ -1,0 +1,8 @@
+# Ignore 3dmodel
+Modules/3dmodel/
+
+#Ignore results
+Modules/results/
+
+Modules/important_results/*
+!Modules/important_results/**/result/
