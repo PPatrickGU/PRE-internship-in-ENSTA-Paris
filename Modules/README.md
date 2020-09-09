@@ -146,11 +146,11 @@ Using Hyperband [algorithm](https://github.com/zygmuntz/hyperband) the best conf
 
 CNN GRU encoder decoder images PR model pitch at 15 sec  |  CNN GRU encoder decoder images PR model roll at 15 sec
 :-------------------------:|:-------------------------:
-<img src="Plots/CNN_GRU_encoder_decoder_images_PR_pitch _pitch_25s.png" width="486" />  | <img src="Plots/CNN_GRU_encoder_decoder_images_PR_roll_25s.png" width="486" />
+<img src="Plots/CNN_GRU_encoder_decoder_images_PR_pitch_25s.png" width="486" />  | <img src="Plots/CNN_GRU_encoder_decoder_images_PR_roll_25s.png" width="486" />
 
 CNN GRU encoder decoder images PR model pitch at 25 sec |  CNN GRU encoder decoder images PR model roll at 25 sec
 :-------------------------:|:-------------------------:
-<img src="CNN_GRU_encoder_decoder_images_PR_roll _25s_25.png" width="486" />  | <img src="Plots/CNN_GRU_encoder_decoder_images_PR_roll _25s_25.png" width="486" />
+<img src="CNN_GRU_encoder_decoder_images_PR_pitch_25s_25.png" width="486" />  | <img src="Plots/CNN_GRU_encoder_decoder_images_PR_roll _25s_25.png" width="486" />
 
 
 ### Conclusion
