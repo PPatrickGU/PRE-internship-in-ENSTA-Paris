@@ -144,18 +144,13 @@ Using Hyperband [algorithm](https://github.com/zygmuntz/hyperband) the best conf
 <p align="justify">
 
 
-LSTM encoder decoder pitch [baseline]  |  LSTM encoder decoder roll [baseline]
+CNN GRU encoder decoder images PR model pitch at 15 sec  |  CNN GRU encoder decoder images PR model roll at 15 sec
 :-------------------------:|:-------------------------:
-<img src="plots/baseline_pitch_10s_v1.png" width="486" />  | <img src="plots/baseline_roll_10s_v1.png" width="486" />
+<img src="Plots/CNN_GRU_encoder_decoder_images_PR_pitch _pitch_25s.png" width="486" />  | <img src="Plots/CNN_GRU_encoder_decoder_images_PR_roll_25s.png" width="486" />
 
-
-CNN LSTM encoder decoder images PR model pitch at 15 sec  |  CNN LSTM encoder decoder images PR model roll at 15 sec
+CNN GRU encoder decoder images PR model pitch at 25 sec |  CNN GRU encoder decoder images PR model roll at 25 sec
 :-------------------------:|:-------------------------:
-<img src="plots/CNN_LSTM_encoder_decoder_images_PR_pitch_15s_best_1fps.png" width="486" />  | <img src="plots/CNN_LSTM_encoder_decoder_images_PR_roll_15s_best_1fps.png" width="486" />
-
-CNN LSTM encoder decoder images PR model pitch at 30 sec |  CNN LSTM encoder decoder images PR model roll at 30 sec
-:-------------------------:|:-------------------------:
-<img src="plots/CNN_LSTM_encoder_decoder_images_PR_pitch_30s_best_1fps.png" width="486" />  | <img src="plots/CNN_LSTM_encoder_decoder_images_PR_roll_30s_best_1fps.png" width="486" />
+<img src="CNN_GRU_encoder_decoder_images_PR_roll _25s_25.png" width="486" />  | <img src="Plots/CNN_GRU_encoder_decoder_images_PR_roll _25s_25.png" width="486" />
 
 
 ### Conclusion
@@ -240,7 +235,7 @@ options:
  - opt             (str): optimizer type  - ['adam', 'sgd']
  - learning_rate   (float): learning_rate - [0.000000001 - 0.01]
  - seed            (int): number to fix random processes - [42]
- - cuda            (boolean): True if we can use GPU
+ - no cuda         (boolean): True if we don't use GPU
  - load_weight     (boolean): True if we will load model
  - load_weight_date(str): date of the test (part of the path)
  - model_type      (str): model type  - ['CNN_stack_FC_first', 'CNN_stack_FC', 'CNN_LSTM_image_encoder_PR_encoder_decoder', 'CNN_PR_FC', 'CNN_LSTM_encoder_decoder_images', 'LSTM_encoder_decoder_PR', 'GRU_encoder_decoder_PR','LSTM_encoder_attention_decoder_PR' , 'CNN_stack_PR_FC', 'CNN_GRU_encoder_decoder_images_PR','CNN_LSTM_encoder_decoder_images_PR', 'CNN_LSTM_decoder_images_PR', 'GRU_encoder_decoder_PR_many', 'LSTM_encoder_decoder_PR_many', 'GRU_encoder_attention_decoder_PR','GRU_encoder_attention_decoder_PR_many','LSTM_encoder_attention_decoder_PR_many', 'CNN_LSTM_encoder_attention_decoder_images_PR_many', 'TransformerModel_PR', 'CNN_LSTM_encoder_attention_decoder_images_PR','CNN_GRU_encoder_attention_decoder_images_PR', 'LSTM_encoder_GRU_decoder_PR', 'LSTM_encoder_GRU_decoder_PR_many', 'LSTM_encoder_GRU_attention_decoder_PR', 'CNN_LSTM_encoder_GRU_attention_decoder_images_PR', 'CNN_LSTM_encoder_GRU_decoder_images_PR', 'CNN_LSTM_encoder_GRU_attention_decoder_images_PR_many', 'CNN_LSTM_encoder_decoder_images_PR_many'])
