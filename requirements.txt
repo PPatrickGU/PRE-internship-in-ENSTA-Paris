@@ -23,7 +23,7 @@ cryptography==2.6.1
 cv-bridge==1.13.0
 cycler==0.10.0
 Cython==0.29.7
-dask==1.1.1
+dask==2021.10.0
 decorator==4.3.2
 diagnostic-analysis==1.9.5
 diagnostic-common-diagnostics==1.9.5
